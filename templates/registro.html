@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %} 
+
+
+<div class="flex_container">
+
+    <div class="container is-fluid">
+    <div class="main-title has-text-centered">
+    <h1 class="title ">{{titulo}}</h1>
+   </div>
+</div> 
+
+
+<body>
+    Registro| <a href="{{ url_for('login') }}">Login</a>
+    <form method="post" enctype="multipart/form-data">
+        <input type="text" name="nombre" placeholder="Nombre" required><br>
+        <input type="text" name="apellido1" placeholder="Primer Apellido" required><br>
+        <input type="text" name="apellido2" placeholder="Segundo Apellido" required><br>
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="tel" name="telefono" placeholder="Teléfono" pattern="[0-9]{8}"><br>
+        <input type="password" name="password" id="password" placeholder="Contraseña" required><br>
+        <input type="password" name="confirmar_password" id="confirmar_password" placeholder="Confirmar Contraseña" required><br>
+        <input type="checkbox" onclick="mostrarContraseña()"> Mostrar Contraseña<br>
+        <input type="file" name="avatar"><br>
+        <input type="submit" value="Registrarse">
+    </form>
+    <script>
+    function mostrarContraseña() {
+      var x = document.getElementById("password");
+      var y = document.getElementById("confirmar_password");
+      if (x.type === "password") {
+        x.type = "text";
+        y.type = "text";
+      } else {
+        x.type = "password";
+        y.type = "password";
+      }
+    }
+    </script>
+</body>
+{% endblock %}

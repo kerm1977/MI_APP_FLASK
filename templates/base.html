@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width,user-scalable=no">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/p.png') }}">      
+</head>
+
+<style>
+        body {
+            background-color: {% if dark_mode %} #333 {% else %} #fff {% endif %};
+            color: {% if dark_mode %} #fff {% else %} #000 {% endif %};
+        }   
+    </style>
+
+<body>   
+
+
+<!-- /***********************************************************/
+INCLUYE EL NAVBAR QUE SE ENCUENTRA EN templates/navbar.html
+/************************************************************/-->
+    {% include "navbar.html" %}
+<!-- /***********************************************************/
+/************************************************************/-->
+
+
+
+<!-- /***********************************************************/
+INCLUYE EL NAVBAR QUE SE ENCUENTRA EN templates/navbar.html
+/************************************************************/-->
+    <h1>Usuarios Registrados</h1>
+    <a href="{{ url_for('toggle_dark_mode') }}">
+        {% if dark_mode %} Modo Claro {% else %} Modo Oscuro {% endif %}
+    </a>
+<!-- /***********************************************************/
+/************************************************************/-->
+
+
+
+<!-- /***********************************************************/
+INCLUYE LOS MENSAJES QUE SE ENCUENTRA EN templates/flash.html
+/************************************************************/-->    
+    <div class="container is-fluid">  
+        {% include 'flash.html' %}
+    </div>  
+<!-- /***********************************************************/
+/************************************************************/-->
+
+
+<!-- /***********************************************************/
+CONTENIDO HEREDADO DE OTRAS PLANTILLAS
+/************************************************************/-->
+    <div class="container is-fluid">
+        {% block content %}
+        {% endblock %}
+    </div> 
+    </div>
+</div>  
+</div> 
+<!-- /***********************************************************/
+/************************************************************/-->
+
+
+
+
+
+{% include "footer.html" %}        
+     
+
+   
+    <!-- js scripts no borrar -->
+        <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/buscador.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/cerrar.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/eye.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/passError.js') }}"></script>
+
+    <!--Scroll arriba -->
+        <a href="#0" class="cd-top">Top</a>
+        <script src="{{url_for('static', filename='js/jquery111.js')}}"></script>
+        <script src="{{url_for('static', filename='js/main.js')}}"></script>
+        <script src="{{url_for('static', filename='js/timePicker.js')}}"></script>
+       
+    <!--Fin scroll arriba -->
+
+       
+  
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <title>Nueva publicación</title>
+</head>
+<body>
+    <h1>Nueva publicación</h1>
+    <form action="{{ url_for('new_post') }}" method="POST" enctype="multipart/form-data">
+        <label for="title">Título:</label><br>
+        <input type="text" id="title" name="title"><br><br>
+        <label for="content">Contenido:</label><br>
+        <textarea id="content" name="content"></textarea><br><br>
+        <label for="image">Imagen:</label><br>
+        <input type="file" id="image" name="image"><br><br>
+        <input type="submit" value="Publicar">
+    </form>
+</body>
+</html>
+
+{% endblock %}

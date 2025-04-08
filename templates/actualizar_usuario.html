@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Actualizar Usuario</title>
+</head>
+<body>
+    <h1>Actualizar Usuario</h1>
+
+    <form method="POST">
+        <label for="nombre">Nombre:</label><br>
+        <input type="text" id="nombre" name="nombre" value="{{ usuario.name }}"><br><br>
+
+        <label for="apellido1">Primer Apellido:</label><br>
+        <input type="text" id="apellido1" name="apellido1" value="{{ usuario.first_last_name }}"><br><br>
+
+        <label for="apellido2">Segundo Apellido:</label><br>
+        <input type="text" id="apellido2" name="apellido2" value="{{ usuario.second_last_name }}"><br><br>
+
+        <label for="telefono">Teléfono:</label><br>
+        <input type="text" id="telefono" name="telefono" value="{{ usuario.phone_number }}"><br><br>
+
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" value="{{ usuario.email }}"><br><br>
+
+        <input type="submit" value="Actualizar Usuario">
+        <button type="submit" name="eliminar_usuario" value="1" onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario?')">Eliminar Usuario</button>
+    </form>
+
+    <a href="{{ url_for('users') }}">Volver a la lista de usuarios</a>
+</body> 
+</html>

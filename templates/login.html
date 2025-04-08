@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %} 
+
+
+
+<div class="flex_container">
+<body>
+    Login | <a href="{{ url_for('registro') }}">Registrate</a>
+    <form method="post">
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="password" name="password" id="password" placeholder="Contraseña" required><br>
+        <input type="checkbox" onclick="mostrarContraseña()"> Mostrar Contraseña<br>
+        <input type="checkbox" name="recordar"> Recordarme<br>
+        <input type="submit" value="Login">
+    </form>
+    <script>
+    function mostrarContraseña() {
+      var x = document.getElementById("password");
+      if (x.type === "password") {
+        x.type = "text";
+      } else {
+        x.type = "password";
+      }
+    }
+    </script>
+</body>
+{% endblock %}
+</div>

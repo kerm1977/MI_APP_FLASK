@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Usuarios Registrados</title>
+</head>
+<body>
+    <h1>Usuarios Registrados</h1>
+    <p>Total de usuarios: {{ user_count }}</p>
+
+    <form method="GET" action="{{ url_for('users') }}">
+        <label for="letter">Buscar por letra:</label>
+        <input type="text" id="letter" name="letter" maxlength="1" value="{{ search_letter or '' }}">
+        <button type="submit">Buscar</button>
+    </form>
+
+    {% for letter, users in users_by_letter.items() %}
+        <h2>{{ letter }}</h2>
+        <ul>
+            {% for user in users %}
+                <li>
+                    Nombre: {{ user.name|title }}, Primer Apellido: {{ user.first_last_name|title }}, Segundo Apellido: {{user.second_last_name|title}}, Teléfono: {{user.phone_number}}, Email: {{ user.email|lower }}, Número de registros: {{ user.registration_count }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+
+    <a href="/profile">Volver a Perfil</a>
+</body>
+</html>

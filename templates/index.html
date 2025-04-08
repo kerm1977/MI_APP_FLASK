@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Posts</h1>
+    {% for post in posts_pagination.items %}
+        <div>
+            <h2>{{ post.title }}</h2>
+            <p>{{ post.content }}</p>
+            {% if post.image %}
+                <img src="{{ url_for('static', filename='uploads/' + post.image) }}" width="400">
+            {% endif %}
+            <a href="{{ url_for('post', post_id=post.id) }}">Ver Post</a>
+        </div>
+    {% endfor %}
+
+    <div class="pagination">
+        {% if posts_pagination.has_prev %}
+            <a href="{{ url_for('index', page=posts_pagination.prev_num) }}">Anterior</a>
+        {% endif %}
+        {% if posts_pagination.has_next %}
+            <a href="{{ url_for('index', page=posts_pagination.next_num) }}">Siguiente</a>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container is-fluid">
+    <div class="main-title has-text-centered">
+    <h1 class="title ">{{titulo}}</h1>
+   </div>
+</div> 
+
+<head>
+    <title>Blog de Videos de YouTube</title>
+    <style>
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* Proporción 16:9 para videos */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+ {%if current_user.is_authenticated%}    
+    <h1>Agrega un Video de YouTube</h1>
+    <form method="POST">
+        <label for="title">Título:</label><br>
+        <input type="text" id="title" name="title" {% if video %} value="{{ video.title }}" {% endif %}><br><br>
+        <label for="detail">Detalle:</label><br>
+        <textarea id="detail" name="detail">{% if video %}{{ video.detail }}{% endif %}</textarea><br><br>
+        <label for="video_url">URL del video de YouTube:</label><br>
+        <input type="text" id="video_url" name="video_url" {% if video %} value="{{ video.video_url }}" {% endif %}><br><br>
+        <button type="submit">{% if video %}Actualizar{% else %}Agregar{% endif %}</button>
+    </form>
+{%endif%}
+
+    <h2>Videos Agregados</h2>
+    <div id="videos-container">
+        {% for i, video in enumerate(videos) %}
+        <div class="video-item">
+            <h3>{{ video.title }}</h3>
+            <p>{{ video.detail }}</p>
+            <div class="video-container">
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/{{ video.video_url.split('v=')[1] }}" frameborder="0" allowfullscreen></iframe>
+            </div>
+            <a href="{{ url_for('delete_video', video_id=i) }}">Eliminar</a>
+            <a href="{{ url_for('update_video', video_id=i) }}">Actualizar</a>
+        </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}
