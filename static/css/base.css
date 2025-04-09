@@ -1,3 +1,16 @@
+ body {
+            background-color: {% if dark_mode %} #333 {% else %} #fff {% endif %};
+            color: {% if dark_mode %} #fff {% else %} #000 {% endif %};
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Asegura que el body ocupe al menos el 100% de la altura de la ventana */
+        }
+
+        main {
+            flex: 1; /* Permite que el main ocupe el espacio disponible */
+        }
+
+
 .flex_container{
 	/*background-color:red;*/
 	display:flex;
@@ -120,3 +133,18 @@ body {
 
 /*footer*/
 
+
+
+
+
+
+
+/*botones de borrado*/
+@media screen and (max-width: 768px) {
+    .mobile-left {
+        margin-left: 0; /* Asegura que no haya margen izquierdo */
+        margin-right: auto; /* Mueve el botón hacia la izquierda */
+    
+    }
+}
+/*botones de borrado*/

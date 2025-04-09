@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+    <section class="section mb-5">
+        <div class="container">
+            <h1 class="title">Versión 1.0</h1>
+            <p class="mb-5">explicación</p>
+
+            {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('version') }}">
+                    <div class="field has-addons">
+                        <div class="control is-expanded">
+                            <input class="input" type="text" name="titulo" placeholder="Nueva tarea" required>
+                        </div>
+                        <div class="control">
+                            <button class="button is-info" type="submit">Agregar Tarea</button>
+                        </div>
+                    </div>
+                </form>
+                <hr>
+                <ul class="list mt-5">
+            {% endif %}
+                {% for tarea in tareas %}
+                    <li class="list-item">
+                        <div class="columns is-vcentered">
+                            <div class="column">
+                                <form method="POST" action="{{ url_for('completar_tarea', tarea_id=tarea.id) }}">
+                                    <label class="checkbox">
+                                        {% if current_user.is_authenticated %}
+                                            <input type="checkbox" name="tarea_id" value="{{ tarea.id }}" {% if tarea.completada %} checked {% endif %} onchange="this.form.submit()">
+                                        {% endif %}
+                                        <span class="{% if tarea.completada %}has-text-grey-light has-text-line-through{% endif %}">
+                                            {{ tarea.titulo }} {% if tarea.completada %} (Completado) {% endif %}
+                                        </span>
+                                    </label>
+                                </form>
+                            </div>
+                            {% if current_user.is_authenticated %}
+                                <div class="column is-narrow mobile-left">
+                                    <form method="POST" action="{{ url_for('borrar_tarea', tarea_id=tarea.id) }}" onsubmit="return confirmarBorrar()">
+                                        <button type="submit" class="delete is-large has-text-danger"></button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            {% if current_user.is_authenticated %}
+                </ul>
+            {% endif %}
+        </div>
+    </section>
+    <script>
+        function confirmarBorrar() {
+            return confirm("¿Estás seguro de que quieres borrar esta tarea?");
+        }
+    </script>
+{% endblock %}

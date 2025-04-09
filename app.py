@@ -105,6 +105,10 @@ class Post(db.Model):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+class Tarea(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    completada = db.Column(db.Boolean, default=False)
 
 @login_manager.user_loader # Define una función para cargar el usuario desde la base de datos (Depende de User y db)
 def load_user(user_id):
@@ -162,6 +166,34 @@ def index():
     posts_pagination = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=per_page)
     return render_template('index.html', posts_pagination=posts_pagination, title=title, tipo_compra=tipo_compra, tipo_venta=tipo_venta)
     
+# version
+@app.route('/version', methods=['GET', 'POST'])
+def version():
+    if request.method == 'POST':
+        if 'titulo' in request.form:
+            titulo = request.form['titulo']
+            nueva_tarea = Tarea(titulo=titulo)
+            db.session.add(nueva_tarea)
+            db.session.commit()
+            return redirect(url_for('version'))  # Redirigir después de agregar
+
+    tareas = Tarea.query.all()
+    return render_template('version.html', tareas=tareas)
+
+@app.route('/version/completar/<int:tarea_id>', methods=['POST'])
+def completar_tarea(tarea_id):
+    tarea = Tarea.query.get_or_404(tarea_id)
+    tarea.completada = not tarea.completada
+    db.session.commit()
+    return redirect(url_for('version'))
+
+@app.route('/version/borrar/<int:tarea_id>', methods=['POST'])
+def borrar_tarea(tarea_id):
+    tarea = Tarea.query.get_or_404(tarea_id)
+    db.session.delete(tarea)
+    db.session.commit()
+    return redirect(url_for('version'))
+# version
 
 
 # GOOGLE Y FACEBOOK
