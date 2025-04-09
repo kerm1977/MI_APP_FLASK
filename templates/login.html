@@ -1,28 +1,92 @@
-{% extends "base.html" %}
-{% block content %} 
+    {% extends "base.html" %}
+{% block content %}
 
+<section class="section">
+    <div class="container">
+        <h1 class="title has-text-centered">Iniciar Sesión</h1>
+        <div class="columns is-centered">
+            <div class="column is-half">
+                <div class="box">
+                    <p class="has-text-centered">Login | <a href="{{ url_for('registro') }}">Registrate</a></p>
 
+                    <form method="post">
+                        <div class="field">
+                            <label class="label">Email</label>
+                            <div class="control">
+                                <input class="input" type="email" name="email" placeholder="Email" required>
+                            </div>
+                        </div>
 
-<div class="flex_container">
-<body>
-    Login | <a href="{{ url_for('registro') }}">Registrate</a>
-    <form method="post">
-        <input type="email" name="email" placeholder="Email" required><br>
-        <input type="password" name="password" id="password" placeholder="Contraseña" required><br>
-        <input type="checkbox" onclick="mostrarContraseña()"> Mostrar Contraseña<br>
-        <input type="checkbox" name="recordar"> Recordarme<br>
-        <input type="submit" value="Login">
-    </form>
-    <script>
+                        <div class="field">
+                            <label class="label">Contraseña</label>
+                            <div class="control">
+                                <input class="input" type="password" name="password" id="password" placeholder="Contraseña" required>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
+                                <label class="checkbox">
+                                    <input type="checkbox" onclick="mostrarContraseña()"> Mostrar Contraseña
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
+                                <label class="checkbox">
+                                    <input type="checkbox" name="recordar"> Recordarme
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
+                                <button class="button is-primary" type="submit">Login</button>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
+                                <a href="{{ url_for('recuperar_contraseña') }}" class="button is-text">Olvidé Contraseña</a>
+                            </div>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <p class="mb-5">Puedes Registarte Con Google o Facebook</p>
+                    <div class="field is-grouped is-grouped-centered">
+                        <div class="control">
+                            <a href="{{ url_for('google_login') }}">
+                                <span class="icon">
+                                    <i class="icon-google"></i>
+                                </span>
+                            </a>
+                        </div>
+                        <div class="control">
+                            <a href="{{ url_for('facebook_login') }}">
+                                <span class="icon">
+                                    <i class="icon-facebook"></i>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
     function mostrarContraseña() {
-      var x = document.getElementById("password");
-      if (x.type === "password") {
-        x.type = "text";
-      } else {
-        x.type = "password";
-      }
+        var x = document.getElementById("password");
+        if (x.type === "password") {
+            x.type = "text";
+        } else {
+            x.type = "password";
+        }
     }
-    </script>
-</body>
+</script>
+
 {% endblock %}
-</div>

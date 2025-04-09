@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 {% block content %} 
 
-<body>
+<div class="flex_container">
+    <div class="container is-fluid">
+    <div class="main-title has-text-centered">
+    <h1 class="title ">{{titulo}}</h1>
+   </div>
+</div> 
+
     <div class="container">
-        <h1 class="title">Crear Nuevo Video</h1>
         <form method="POST" action="/create_vids" enctype="multipart/form-data">
             <div class="field">
                 <label class="label">Título</label>

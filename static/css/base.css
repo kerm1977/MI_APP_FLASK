@@ -3,9 +3,17 @@
 	display:flex;
 	flex-wrap: wrap;
 	justify-content: center;
-	margin-top: 200px;
+	margin-top: 20px;
 }
 
+.no-shadow {
+        box-shadow: none !important;
+    }
+
+
+.search_video{
+	margin-bottom: 100px;
+}
 
 * p{
 	font-family: Helvetica, "Trebuchet MS", Verdana, sans-serif;
@@ -20,12 +28,6 @@
 	font-family: ronda !important;
 }
 
- @media (max-width: 768px) {
- 	.main-title{
-		margin-top: 100px;
-	}
-
-}
 
 .Form_container{
 	margin:auto;
@@ -57,13 +59,64 @@
 /*------------------------------------------*/
 
 
+.input.is-rounded:focus {
+    outline: none !important;
+    border: none;
+}
+
+.search_video:focus {
+    outline: none !important;
+    border: none;
+	}
 
 
 
+/*COMPARTIR VIDEO*/
+.share-buttons {
+    margin-top: 10px;
+}
+
+.share-buttons a {
+    margin-right: 5px;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #333;
+}
+
+.share-buttons a:hover {
+    background-color: #f0f0f0;
+}
+
+/*COMPARTIR VIDEO*/
 
 
 
+/*footer*/
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Usa vh para altura de la ventana */
+    margin: 0;
+}
 
+.content-wrapper {
+    flex-grow: 1; /* Permite que el contenido crezca y ocupe el espacio disponible */
+}
 
+@media only screen and (max-width: 768px) {
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 110vh; /* Usa vh para altura de la ventana */
+    margin: 0;
+}
 
+    .content-wrapper {
+        flex-grow: 1; /* Permite que el contenido crezca y ocupe el espacio disponible */
+    }
+}
+
+/*footer*/
 

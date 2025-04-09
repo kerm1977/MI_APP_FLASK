@@ -1,49 +1,57 @@
 {% extends "base.html" %}
-{% block content %} 
-
+{% block content %}
 
 <div class="container is-fluid">
     <div class="main-title has-text-centered">
-    <h1 class="title ">{{titulo}}</h1>
-   </div>
-</div> 
-
-
-<div class="flex_container">
-<head>
-    <title>profile</title>
-</head>
-
-<body>
-    <h1>Perfil</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <p>Nombre: {{ usuario.name }}</p>
-    <p>Primer Apellido: {{ usuario.first_last_name }}</p>
-    <p>Segundo Apellido: {{ usuario.second_last_name }}</p>
-    <p>Teléfono: {{ usuario.phone_number }}</p>
-    <p>Email: {{ usuario.email }}</p>
-    {% if usuario.avatar %}
-        <img src="{{ url_for('static', filename=usuario.avatar) }}" alt="Avatar" style="max-width: 100px;">
-    {% endif %}
-    <p><a href="{{ url_for('actualizar_usuario', user_id=usuario.id) }}">Actualizar Perfil</a></p>
-    <p><a href="{{ url_for('actualizar_avatar') }}">Actualizar Avatar</a></p>
-    <p><a href="{{ url_for('logout') }}">Cerrar Sesión</a></p>
-</body>
-</html>
+        <h1 class="title">{{ titulo }}</h1>
+    </div>
 </div>
 
+<section class="section">
+    <div class="container">
+        <div class="box no-shadow">
+            <h2 class="subtitle">Perfil</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="notification is-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-<hr>
-<a href="#">Contactos</a>
+            <p><strong>Nombre:</strong> {{ usuario.name }}</p>
+            <p><strong>Primer Apellido:</strong> {{ usuario.first_last_name }}</p>
+            <p><strong>Segundo Apellido:</strong> {{ usuario.second_last_name }}</p>
+            <p><strong>Teléfono:</strong> {{ usuario.phone_number }}</p>
+            <p><strong>Email:</strong> {{ usuario.email }}</p>
 
-<a href="{{ url_for('users') }}">Ver usuarios registrados</a>
+            {% if usuario.avatar %}
+                <figure class="image is-128x128">
+                    <img class="is-rounded" src="{{ url_for('static', filename=usuario.avatar) }}" alt="Avatar">
+                </figure>
+            {% endif %}
+
+            <div class="mt-4">
+                <a class="button is-primary" href="{{ url_for('actualizar_usuario', user_id=usuario.id) }}">Actualizar Perfil</a>
+                <a class="button is-info" href="{{ url_for('actualizar_avatar') }}">Actualizar Avatar</a>
+                <a class="button is-danger" href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            </div>
+            <hr>
+        </div>
+    </div>
+</section>
+
+
+
+<section class="section">
+    <div class="container">
+        <div class="buttons">
+            <a class="button is-link" href="#">Contactos</a>
+            <a class="button is-link" href="{{ url_for('users') }}">Ver usuarios registrados</a>
+        </div>
+    </div>
+</section>
 
 {% endblock %}

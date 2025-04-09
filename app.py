@@ -7,6 +7,8 @@ from werkzeug.utils import secure_filename # Importa secure_filename para maneja
 import os # Importa el módulo os para interactuar con el sistema operativo (Depende de app.secret_key y rutas de uploads)
 from datetime import datetime
 import sqlite3
+from flask_mail import Mail, Message
+from sqlalchemy import or_
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, TimeField, FloatField, IntegerField, BooleanField, FileField, SubmitField
 from wtforms.validators import DataRequired
@@ -14,6 +16,8 @@ import requests
 from bs4 import BeautifulSoup
 import secrets #videos
 import math
+import secrets
+from authlib.integrations.flask_client import OAuth
 
 
 
@@ -32,6 +36,47 @@ login_manager = LoginManager() # Crea una instancia de LoginManager para manejar
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
+
+
+# AREA DE RECUPERACIÓN DE CONTRASEÑA
+app.secret_key = secrets.token_hex(16) # Genera una clave secreta segura
+# Configuración de Flask-Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'tu_correo@gmail.com'
+app.config['MAIL_PASSWORD'] = 'tu_contraseña_de_aplicación'
+# AREA DE RECUPERACIÓN DE CONTRASEÑA
+
+
+# Configuración de OAuth
+oauth = OAuth(app)
+
+google = oauth.register(
+    name='google',
+    client_id='TU_CLIENT_ID_GOOGLE',
+    client_secret='TU_CLIENT_SECRET_GOOGLE',
+    access_token_url='https://oauth2.googleapis.com/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    client_kwargs={'scope': 'email profile'},
+)
+
+facebook = oauth.register(
+    name='facebook',
+    client_id='TU_APP_ID_FACEBOOK',
+    client_secret='TU_APP_SECRET_FACEBOOK',
+    access_token_url='https://graph.facebook.com/oauth/access_token',
+    access_token_params=None,
+    authorize_url='https://www.facebook.com/v12.0/dialog/oauth',
+    authorize_params=None,
+    api_base_url='https://graph.facebook.com/v12.0/',
+    client_kwargs={'scope': 'email public_profile'},
+)
+
+
 
 
 class User(UserMixin, db.Model): # Define el modelo de usuario (Depende de db)
@@ -72,9 +117,6 @@ class Video(db.Model):
     detail = db.Column(db.Text)
     video_url = db.Column(db.String(200))
     image_url = db.Column(db.String(200))  # Nuevo campo para la URL de la imagen
-
-
-
 
 def obtener_tipo_cambio_bcr():
     try:
@@ -119,14 +161,98 @@ def index():
     per_page = 5
     posts_pagination = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=per_page)
     return render_template('index.html', posts_pagination=posts_pagination, title=title, tipo_compra=tipo_compra, tipo_venta=tipo_venta)
-
     
+
+
+# GOOGLE Y FACEBOOK
+@app.route('/google/login')
+def google_login():
+    redirect_uri = url_for('google_auth', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/google/auth')
+def google_auth():
+    token = google.authorize_access_token()
+    resp = google.get('userinfo')
+    user_info = resp.json()
+    email = user_info['email']
+    name = user_info['name']
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Crea un nuevo usuario
+        user = User(name=name, email=email)
+        db.session.add(user)
+        db.session.commit()
+    login_user(user)
+    return redirect(url_for('index'))
+
+@app.route('/facebook/login')
+def facebook_login():
+    redirect_uri = url_for('facebook_auth', _external=True)
+    return facebook.authorize_redirect(redirect_uri)
+
+@app.route('/facebook/auth')
+def facebook_auth():
+    token = facebook.authorize_access_token()
+    resp = facebook.get('me?fields=id,name,email')
+    user_info = resp.json()
+    email = user_info['email']
+    name = user_info['name']
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Crea un nuevo usuario
+        user = User(name=name, email=email)
+        db.session.add(user)
+        db.session.commit()
+    login_user(user)
+    return redirect(url_for('index'))
+# GOOGLE Y FACEBOOK
+
+
+
+# RECUPERACION DE CONTRASEÑA
+@app.route('/recuperar_contraseña', methods=['GET', 'POST'])
+def recuperar_contraseña():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        # Lógica para generar un token de recuperación y enviar un correo
+        token = secrets.token_urlsafe(16)
+        # Aquí debes guardar el token y el email en la base de datos
+        # Ejemplo: guardar_token_en_bd(email, token)
+        # Luego enviar el correo
+        msg = Message('Recuperación de Contraseña', sender='your_email@example.com', recipients=[email])
+        msg.body = f'Para restablecer tu contraseña, haz clic en el siguiente enlace: {url_for("restablecer_contraseña", token=token, _external=True)}'
+        mail.send(msg)
+        flash('Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.', 'success')
+        return redirect(url_for('login'))
+    return render_template('recuperar_contraseña.html')
+
+@app.route('/restablecer_contraseña/<token>', methods=['GET', 'POST'])
+def restablecer_contraseña(token):
+    # Lógica para verificar el token y mostrar el formulario de restablecimiento
+    # Ejemplo: email = obtener_email_de_token(token)
+    # Si el token es válido, mostrar el formulario
+    if request.method == 'POST':
+        password = request.form.get('password')
+        # Lógica para actualizar la contraseña en la base de datos
+        # Ejemplo: actualizar_contraseña(email, password)
+        flash('Tu contraseña ha sido restablecida con éxito.', 'success')
+        return redirect(url_for('login'))
+    return render_template('restablecer_contraseña.html', token=token)
+# RECUPERACION DE CONTRASEÑA
+
+
+
+
+
+
 # ver imagenes
 @app.route('/post/<int:post_id>')
 def post(post_id):
     post = Post.query.get_or_404(post_id)
     return render_template('index.html', post=post)
-
 
 @app.route('/new', methods=['GET', 'POST'])
 def new_post():
@@ -187,6 +313,8 @@ def delete_post(post_id):
 
 
 
+
+
 @app.route('/create_vids', methods=['GET', 'POST'])
 def create_vids():
     if request.method == 'POST':
@@ -226,7 +354,16 @@ def videos(page=1):
         return redirect(url_for('videos'))
 
     per_page = 6
-    videos_list = Video.query.paginate(page=page, per_page=per_page, error_out=False) # corrected line
+    query = request.args.get('q', '')
+
+    if query:
+        videos_list = Video.query.filter(or_(
+            Video.title.ilike(f"%{query}%"),
+            Video.detail.ilike(f"%{query}%")
+        )).paginate(page=page, per_page=per_page, error_out=False)
+    else:
+        videos_list = Video.query.paginate(page=page, per_page=per_page, error_out=False)
+
     return render_template('videos.html', videos=videos_list)
 
 @app.route('/videos/edit/<int:video_id>', methods=['GET', 'POST'])
@@ -265,6 +402,11 @@ def delete_video_confirm(video_id):
     return redirect(url_for('videos'))
 
 
+
+
+
+
+
 @app.route('/users', methods=['GET', 'POST'])
 @login_required
 def users():
@@ -285,9 +427,6 @@ def users():
             users_by_letter[first_letter].append(user)
 
     return render_template('users.html', users_by_letter=users_by_letter, user_count=user_count, search_letter=search_letter)
-
-
-
 
 
 # REGISTRO DE USUARIO
@@ -400,25 +539,12 @@ def actualizar_avatar(): # Define la función para actualizar el avatar del usua
 # FINAL DEL REGISTRO DE USUARIO
 
 
-
-
-
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
     flash("Sesión finalizada", "notification is-warning")
     return redirect(url_for("index"))  # Cambiado de "home" a "index"
-
-
-
-
-
-
-
-
-
-
 
 
 # MODO NOCTURNO

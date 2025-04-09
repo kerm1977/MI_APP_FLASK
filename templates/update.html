@@ -1,8 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Actualizar Publicación</title>
-</head>
+{% extends "base.html" %}
+{% block content %} 
+
+<div class="flex_container">
+    <div class="container is-fluid">
+    <div class="main-title has-text-centered">
+    <h1 class="title ">{{titulo}}</h1>
+   </div>
+</div>
+
+
 <body>
     <h1>Actualizar Publicación</h1>
     <form method="POST">
@@ -11,4 +17,7 @@
         <button type="submit">Actualizar</button>
     </form>
 </body>
-</html>
+
+
+
+{% endblock %}
