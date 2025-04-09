@@ -1,30 +1,31 @@
 <nav class="navcss">
-    <input type="checkbox" id="btn_menu" >
-        <label for="btn_menu" class="checkbtn btn_menu flex_column">
-            <span id="btn_span_1" class="btn_span"></span>
-            <span id="btn_span_2" class="btn_span"></span>
-            <span id="btn_span_3" class="btn_span"></span>
-       </label>
-
-
+    <input type="checkbox" id="btn_menu">
+    <label for="btn_menu" class="checkbtn btn_menu flex_column">
+        <span id="btn_span_1" class="btn_span"></span>
+        <span id="btn_span_2" class="btn_span"></span>
+        <span id="btn_span_3" class="btn_span"></span>
+    </label>
     <label class="logo">LA TRIBU</label>
-    
     <ul class="ul-nav">
-        {%if current_user.is_authenticated%}
-            <li> <a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
-
-            <li class="nav-li"><a class="nav-href"  href="{{ url_for('new_post') }}">Crear Post</a></li>
-            <li class="nav-li" ><a class="nav-href"  href="{{ url_for('video') }}"><span ></span>Multimedia</a></li>
-            <li class="nav-li"><a class="nav-href"  href="{{url_for('perfil')}}">Dashboard</a></li>
-            
-        {%else%}
-            
-            <li class="nav-li" ><a class="nav-href"  href="{{ url_for('video') }}"><span ></span>Multimedia</a></li>
-            <li class="nav-li" ><a class="nav-href"  href="{{ url_for('login') }}"><span > </span>entrar</a></li>
-             <li class="nav-li" ><a class="nav-href"  href="#"><span > </span>flyers</a></li>    
-            <li class="nav-li" ><a class="nav-href"  href="{{url_for('registro')}}"><span class="icon-user"></span></a></li>
-        {%endif%}
-
+        {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+            <li class="nav-li"><a class="nav-href" href="{{ url_for('new_post') }}">Crear Post</a></li>
+            <li class="nav-li"><a class="nav-href" href="{{ url_for('create_vids') }}">Agregar Video</a></li>
+            <li class="nav-li"><a class="nav-href" href="{{ url_for('videos') }}">Multimedia</a></li>
+            <li class="nav-li"><a class="nav-href" href="{{ url_for('perfil') }}">Dashboard</a></li>
+        {% else %}
+            <li class="nav-li"><a class="nav-href" href="{{ url_for('videos') }}">Multimedia</a></li>
+            <li class="nav-li"><a class="nav-href" href="{{ url_for('login') }}">entrar</a></li>
+            <li class="nav-li"><a class="nav-href" href="#">flyers</a></li>
+            <li class="nav-li"><a class="nav-href" href="{{ url_for('registro') }}">registro</a></li>
+        {% endif %}
+        {% if tipo_compra and tipo_venta %}
+            <li class="nav-li">
+                <span class="nav-href">Compra: {{ tipo_compra }}</span>
+            </li>
+            <li class="nav-li">
+                <span class="nav-href">Venta: {{ tipo_venta }}</span>
+            </li>
+        {% endif %}
     </ul>
 </nav>
-

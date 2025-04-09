@@ -10,6 +10,11 @@ import sqlite3
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, TimeField, FloatField, IntegerField, BooleanField, FileField, SubmitField
 from wtforms.validators import DataRequired
+import requests
+from bs4 import BeautifulSoup
+import secrets #videos
+import math
+
 
 
 
@@ -61,31 +66,59 @@ def load_user(user_id):
     return User.query.get(int(user_id)) # Obtiene el usuario de la base de datos
 
 
-class Video(db.Model): # Define el modelo de video (Depende de db)
-    id = db.Column(db.Integer, primary_key=True) # Define el ID del video (Depende de db)
-    title = db.Column(db.String(200)) # Define el título del video (Depende de db)
-    detail = db.Column(db.Text) # Define los detalles del video (Depende de db)
-    video_url = db.Column(db.String(200)) # Define la URL del video (Depende de db)
-
-def allowed_file(filename): # Define una función para verificar si un archivo tiene una extensión permitida (Depende de app.config['ALLOWED_EXTENSIONS'])
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS'] # Verifica la extensión del archivo
-
-with app.app_context(): # Crea un contexto de aplicación para la base de datos (Depende de app y db)
-    db.create_all() # Crea todas las tablas de la base de datos
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200))
+    detail = db.Column(db.Text)
+    video_url = db.Column(db.String(200))
+    image_url = db.Column(db.String(200))  # Nuevo campo para la URL de la imagen
 
 
+
+
+def obtener_tipo_cambio_bcr():
+    try:
+        url = "https://gee.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?CodCuadro=401"
+        response = requests.get(url)
+        response.raise_for_status()  # Lanza una excepción para errores HTTP
+
+        soup = BeautifulSoup(response.content, "html.parser")
+        tabla = soup.find("table", {"id": "tblCuadro"})
+        filas = tabla.find_all("tr")
+
+        tipo_compra = None
+        tipo_venta = None
+
+        for fila in filas:
+            celdas = fila.find_all("td")
+            if len(celdas) >= 3:
+                descripcion = celdas[0].text.strip()
+                valor = celdas[2].text.strip()
+                if "Compra" in descripcion:
+                    tipo_compra = valor
+                elif "Venta" in descripcion:
+                    tipo_venta = valor
+        return tipo_compra, tipo_venta
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error al obtener los datos: {e}")
+        return None, None
+    except AttributeError:
+        print("Error al parsear los datos.")
+        return None, None
 
 
 @app.route("/")
 @app.route("/home")
 @app.route("/index")
 def index():
+    tipo_compra, tipo_venta = obtener_tipo_cambio_bcr()
     print("Función index() ejecutada")
     title = "Este es el Index"
     page = request.args.get('page', 1, type=int)
     per_page = 5
     posts_pagination = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=per_page)
-    return render_template('index.html', posts_pagination=posts_pagination, title=title)
+    return render_template('index.html', posts_pagination=posts_pagination, title=title, tipo_compra=tipo_compra, tipo_venta=tipo_venta)
 
     
 # ver imagenes
@@ -154,12 +187,82 @@ def delete_post(post_id):
 
 
 
+@app.route('/create_vids', methods=['GET', 'POST'])
+def create_vids():
+    if request.method == 'POST':
+        title = request.form['title']
+        detail = request.form['detail']
+        video_url = request.form['video_url']
+        image = request.files.get('image')
 
+        if image:
+            filename = secrets.token_hex(16) + os.path.splitext(image.filename)[1]
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(filepath)
+            image_url = filepath
+        else:
+            image_url = None
 
+        new_video = Video(title=title, detail=detail, video_url=video_url, image_url=image_url)
+        db.session.add(new_video)
+        db.session.commit()
+        flash('Video guardado correctamente', 'success')
+        return redirect(url_for('videos'))
 
+    return render_template('create_vids.html')
 
+@app.route('/videos', methods=['GET', 'POST'])
+@app.route('/videos/page/<int:page>', methods=['GET', 'POST'])
+def videos(page=1):
+    if request.method == 'POST':
+        title = request.form['title']
+        detail = request.form['detail']
+        video_url = request.form['video_url']
 
+        new_video = Video(title=title, detail=detail, video_url=video_url)
+        db.session.add(new_video)
+        db.session.commit()
+        flash('Video guardado correctamente', 'success')
+        return redirect(url_for('videos'))
 
+    per_page = 6
+    videos_list = Video.query.paginate(page=page, per_page=per_page, error_out=False) # corrected line
+    return render_template('videos.html', videos=videos_list)
+
+@app.route('/videos/edit/<int:video_id>', methods=['GET', 'POST'])
+def edit_video(video_id):
+    video = Video.query.get_or_404(video_id)
+    if request.method == 'POST':
+        video.title = request.form['title']
+        video.detail = request.form['detail']
+        video.video_url = request.form['video_url']
+        image = request.files.get('image')
+
+        if image:
+            filename = secrets.token_hex(16) + os.path.splitext(image.filename)[1]
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(filepath)
+            video.image_url = filepath
+        db.session.commit()
+        flash('Video actualizado correctamente', 'success')
+        return redirect(url_for('videos'))
+    return render_template('edit_video.html', video=video)
+
+@app.route('/videos/delete/<int:video_id>')
+def delete_video(video_id):
+    video = Video.query.get_or_404(video_id)
+    db.session.delete(video)
+    db.session.commit()
+    flash('Video eliminado correctamente', 'success')
+    return redirect(url_for('videos'))
+
+@app.route('/videos/delete_confirm/<int:video_id>')
+def delete_video_confirm(video_id):
+    video = Video.query.get_or_404(video_id)
+    db.session.delete(video)
+    db.session.commit()
+    flash('Video eliminado correctamente', 'success')
+    return redirect(url_for('videos'))
 
 
 @app.route('/users', methods=['GET', 'POST'])
@@ -311,58 +414,6 @@ def logout():
 
 
 
-
-
-# VIDEOS
-videos = [] # Define una lista vacía para almacenar los videos
-
-@app.context_processor # Define un procesador de contexto para pasar variables a las plantillas (Depende de enumerate)
-def inject_enumerate(): # Define la función del procesador de contexto
-    return dict(enumerate=enumerate) # Pasa la función enumerate a las plantillas
-
-
-@app.route('/video', methods=['GET', 'POST']) # Define la ruta para los videos (Depende de render_template, request, Video, db y url_for)
-def video(): # Define la función para los videos
-    if request.method == 'POST': # Verifica si la solicitud es POST
-        title = request.form['title'] # Obtiene el título del video del formulario
-        detail = request.form['detail'] # Obtiene los detalles del video del formulario
-        video_url = request.form['video_url'] # Obtiene la URL del video del formulario
-        new_video = Video(title=title, detail=detail, video_url=video_url) # Crea un nuevo video
-        db.session.add(new_video) # Agrega el video a la sesión de la base de datos
-        db.session.commit() # Guarda los cambios en la base de datos
-        return redirect(url_for('video')) # Redirige a la página de videos
-    videos = Video.query.all() # Obtiene todos los videos de la base de datos
-    return render_template('video.html', videos=videos) # Renderiza la plantilla video.html
-
-@app.route('/delete_video/<int:video_id>') # Define la ruta para eliminar un video (Depende de Video, db, login_required y url_for)
-@login_required # Requiere que el usuario esté autenticado
-def delete_video(video_id): # Define la función para eliminar un video
-    video = Video.query.get_or_404(video_id) # Obtiene el video de la base de datos o muestra un error 404 si no existe
-    db.session.delete(video) # Elimina el video de la base de datos
-    db.session.commit() # Guarda los cambios en la base de datos
-    return redirect(url_for('video')) # Redirige a la página de videos
-
-@app.route('/update_video/<int:video_id>', methods=['GET', 'POST']) # Define la ruta para actualizar un video (Depende de render_template, request, Video, db, login_required y url_for)
-@login_required # Requiere que el usuario esté autenticado
-def update_video(video_id): # Define la función para actualizar un video
-    video = Video.query.get_or_404(video_id) # Obtiene el video de la base de datos o muestra un error 404 si no existe
-    if request.method == 'POST': # Verifica si la solicitud es POST
-        video.title = request.form['title'] # Actualiza el título del video
-        video.detail = request.form['detail'] # Actualiza los detalles del video
-        video.video_url = request.form['video_url'] # Actualiza la URL del video
-        db.session.commit() # Guarda los cambios en la base de datos
-        return redirect(url_for('video')) # Redirige a la página de videos
-    return render_template('video.html', video=video) # Renderiza la plantilla video.html
-
-
-@app.route('/delete/<int:id>') # Define la ruta para eliminar una publicación (Depende de Post, db, login_required y url_for)
-@login_required # Requiere que el usuario esté autenticado
-def delete(id): # Define la función para eliminar una publicación
-    post = Post.query.get_or_404(id) # Obtiene la publicación de la base de datos o muestra un error 404 si no existe
-    db.session.delete(post) # Elimina la publicación de la base de datos
-    db.session.commit() # Guarda los cambios en la base de datos
-    return redirect(url_for('index')) # Redirige a la página de inicio
-# FINAL DE  VIDEOS
 
 
 

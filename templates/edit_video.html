@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Editar Video</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Editar Video</h1>
+        <form method="POST" action="/videos/edit/{{ video.id }}" enctype="multipart/form-data">
+            <div class="field">
+                <label class="label">Título</label>
+                <div class="control">
+                    <input class="input" type="text" name="title" value="{{ video.title }}" required>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Descripción</label>
+                <div class="control">
+                    <textarea class="textarea" name="detail">{{ video.detail }}</textarea>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">URL del Video</label>
+                <div class="control">
+                    <input class="input" type="text" name="video_url" value="{{ video.video_url }}" required>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Imagen</label>
+                <div class="control">
+                    <input class="file" type="file" name="image" accept="image/*">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary" type="submit">Guardar Cambios</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

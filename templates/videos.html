@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<body>
+    <div class="container">
+        {% if current_user.is_authenticated %}
+        <h1 class="title">Agregar Video</h1>
+        <form method="POST" action="/videos">
+        </form>
+        {% endif %}
+
+        <h2 class="subtitle">Videos Guardados</h2>
+        <div class="columns is-multiline">
+            {% for video in videos.items %}
+            <div class="column is-one-third">
+                <div class="card">
+                    <div class="card-image">
+                        <a href="{{ video.video_url }}" target="_blank">
+                        {% if video.image_url %}
+                        <figure class="image is-16by9">
+                            <img src="{{ video.image_url }}" alt="Imagen del video" style="object-fit: cover;">
+                        </figure>
+                        {% endif %}
+                    </div>
+                    <div class="card-content">
+                        <p class="title">{{ video.title|default('Sin título', true) }}</p>
+                        <p class="subtitle">{{ video.detail|default('Sin descripción', true) }}</p>
+                        <div class="content">
+                            {% if video.video_url %}
+                            <a href="{{ video.video_url }}" target="_blank">Ver Video</a>
+                            {% else %}
+                            <p>No hay URL de video disponible.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if current_user.is_authenticated %}
+                    <footer class="card-footer">
+                        <a href="/videos/edit/{{ video.id }}" class="card-footer-item">Editar</a>
+                        <a href="#" class="card-footer-item" onclick="confirmDelete('{{ url_for('delete_video_confirm', video_id=video.id) }}')">Eliminar</a>
+                    </footer>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+            {% if videos.has_prev %}
+            <a class="pagination-previous" href="{{ url_for('videos', page=videos.prev_num) }}">Anterior</a>
+            {% endif %}
+            {% if videos.has_next %}
+            <a class="pagination-next" href="{{ url_for('videos', page=videos.next_num) }}">Siguiente</a>
+            {% endif %}
+            <ul class="pagination-list">
+                {% for page_num in videos.iter_pages() %}
+                {% if page_num %}
+                {% if videos.page == page_num %}
+                <li><a class="pagination-link is-current" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
+                {% else %}
+                <li><a class="pagination-link" href="{{ url_for('videos', page=page_num) }}" aria-label="Goto page {{ page_num }}">{{ page_num }}</a></li>
+                {% endif %}
+                {% else %}
+                <li><span class="pagination-ellipsis">&hellip;</span></li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+    </div>
+    <script>
+        function confirmDelete(deleteUrl) {
+            if (confirm("¿Estás seguro de que deseas eliminar este video?")) {
+                window.location.href = deleteUrl;
+            }
+        }
+    </script>
+</body>
+{% endblock %}
