@@ -37,6 +37,15 @@ login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depend
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
 
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS # No corchetes extras
+
+
+
 
 # AREA DE RECUPERACIÓN DE CONTRASEÑA
 app.secret_key = secrets.token_hex(16) # Genera una clave secreta segura
@@ -102,8 +111,9 @@ class Post(db.Model):
     image = db.Column(db.String(100))
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+
 
 class Tarea(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -284,63 +294,122 @@ def restablecer_contraseña(token):
 @app.route('/post/<int:post_id>')
 def post(post_id):
     post = Post.query.get_or_404(post_id)
-    return render_template('index.html', post=post)
+    return render_template('post_detail.html', post=post)
+
 
 @app.route('/new', methods=['GET', 'POST'])
 def new_post():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-        image = request.files['image']
+        image = request.files.get('image') # .get to prevent keyerror
 
-        filename = None
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
 
-        if image and allowed_file(image.filename):
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        if image and image.filename != '':
+            if len(image.read(512)) > app.config['MAX_CONTENT_LENGTH']: #read only the start of the file
+                flash("El archivo es demasiado grande.", 'danger')
+                return render_template('new_post.html')
 
-        post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow())
+            image.seek(0)  # reset the file pointer
 
-        try:
-            db.session.add(post)
-            db.session.commit()
-            flash('Publicación creada con éxito', 'success')
-            return redirect(url_for('index'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error al crear la publicación: {e}', 'danger')
-            return render_template('new_post.html', error=str(e)) # Pasar el error a la plantilla
+            if allowed_file(image.filename):
+                filename = secure_filename(image.filename)
+                try:
+                    image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow())
+                    db.session.add(post)
+                    db.session.commit()
+                    flash('Publicación creada con éxito', 'success')
+                    return redirect(url_for('index'))
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Error al crear la publicación: {e}', 'danger')
+                    return render_template('new_post.html', error=str(e))
+            else:
+                flash("Archivo no permitido", "danger")
+                return render_template('new_post.html')
+
+        else: # no image uploaded.
+            post = Post(title=title, content=content, image=None, date_posted=datetime.utcnow())
+            try:
+                db.session.add(post)
+                db.session.commit()
+                flash('Publicación creada con éxito', 'success')
+                return redirect(url_for('index'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error al crear la publicación: {e}', 'danger')
+                return render_template('new_post.html', error=str(e))
 
     return render_template('new_post.html')
 
+
+
 @app.route('/edit/<int:post_id>', methods=['GET', 'POST'])
+@login_required  # Requiere que el usuario esté logueado
 def edit_post(post_id):
     post = Post.query.get_or_404(post_id)
+    if post.user_id != current_user.id: # check if the user is the post's author
+        flash("No tienes permiso para editar este post.", "danger")
+        return redirect(url_for('post', post_id=post.id))
+
     if request.method == 'POST':
         post.title = request.form['title']
         post.content = request.form['content']
-        image = request.files['image']
+        image = request.files.get('image') # get to prevent key error
 
-        if image and allowed_file(image.filename):
-            if post.image:
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], post.image))
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            post.image = filename
+        if image and image.filename != '':
+            if allowed_file(image.filename):
+                if post.image:
+                    try:
+                        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], post.image))
+                    except Exception as e:
+                        print(f"Error al borrar la imagen antigua: {e}")
+                filename = secure_filename(image.filename)
+                try:
+                    image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    post.image = filename
+                except Exception as e:
+                    print(f"Error al guardar el archivo: {e}")
+                    flash(f"Error al guardar el archivo: {e}", 'danger')
+                    return render_template('edit_post.html', post=post, error=str(e))
 
         db.session.commit()
         return redirect(url_for('post', post_id=post.id))
     return render_template('edit_post.html', post=post)
 
+
 @app.route('/delete/<int:post_id>', methods=['POST'])
+@login_required
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
+
+    if post.user_id != current_user.id:
+        flash("No tienes permiso para borrar este post.", "danger")
+        return redirect(url_for('post', post_id=post.id))
+
     if post.image:
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], post.image))
-    db.session.delete(post)
-    db.session.commit()
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], post.image)
+        if os.path.exists(image_path):
+            try:
+                os.remove(image_path)
+            except FileNotFoundError:
+                flash("Error: La imagen no fue encontrada.", "danger")
+                return redirect(url_for('post', post_id=post.id))
+            except OSError as e:
+                flash(f"Error al borrar la imagen: {e}", "danger")
+                return redirect(url_for('post', post_id=post.id))
+
+    try:
+        db.session.delete(post)
+        db.session.commit()
+        flash("Publicación borrada con éxito.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al borrar la publicación: {e}", "danger")
     return redirect(url_for('index'))
-# fin ver imagenes
+# fin ver post
 
 
 
@@ -350,26 +419,52 @@ def delete_post(post_id):
 @app.route('/create_vids', methods=['GET', 'POST'])
 def create_vids():
     if request.method == 'POST':
-        title = request.form['title']
-        detail = request.form['detail']
-        video_url = request.form['video_url']
+        title = request.form.get('title')
+        detail = request.form.get('detail')
+        video_url = request.form.get('video_url')
         image = request.files.get('image')
 
-        if image:
-            filename = secrets.token_hex(16) + os.path.splitext(image.filename)[1]
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            image.save(filepath)
-            image_url = filepath
-        else:
-            image_url = None
+        if not title or not video_url:
+            flash("Título y URL del video son obligatorios.", 'danger')
+            return redirect(request.referrer)
 
-        new_video = Video(title=title, detail=detail, video_url=video_url, image_url=image_url)
-        db.session.add(new_video)
-        db.session.commit()
-        flash('Video guardado correctamente', 'success')
-        return redirect(url_for('videos'))
+        if not is_valid_url(video_url):
+            flash("URL del video no válida.", 'danger')
+            return redirect(request.referrer)
 
-    return render_template('create_vids.html')
+        filename = None
+
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            try:
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            except Exception as e:
+                print(f"Error al guardar el archivo: {e}")
+                flash(f"Error al guardar el archivo: {e}", 'danger')
+                return redirect(request.referrer)
+
+        video = Video(title=title, detail=detail, video_url=video_url, image=filename, date_posted=datetime.utcnow())
+
+        try:
+            db.session.add(video)
+            db.session.commit()
+            flash('Video guardado con éxito', 'success')
+            return redirect(url_for('index'))  # Reemplaza 'index' con tu ruta de éxito
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al guardar el video: {e}', 'danger')
+            return redirect(request.referrer)
+
+    return render_template('create_vids.html', titulo="Agregar Video")  # Reemplaza 'create_vids.html'
+
+def is_valid_url(url):
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+
+    
 
 @app.route('/videos', methods=['GET', 'POST'])
 @app.route('/videos/page/<int:page>', methods=['GET', 'POST'])
@@ -548,27 +643,29 @@ def login(): # Define la función para el inicio de sesión
 def perfil(): # Define la función para el perfil del usuario
     return render_template('perfil.html', usuario=current_user) # Renderiza la plantilla perfil.html
 
-@app.route('/actualizar_avatar', methods=['GET', 'POST']) # Define la ruta para actualizar el avatar del usuario (Depende de render_template, request, secure_filename, os, User, db, current_user, login_required y url_for)
-@login_required # Requiere que el usuario esté autenticado
-def actualizar_avatar(): # Define la función para actualizar el avatar del usuario
-    usuario = current_user # Obtiene el usuario actual
-    if request.method == 'POST': # Verifica si la solicitud es POST
-        if 'avatar' in request.files: # Verifica si se cargó un avatar
-            file = request.files['avatar'] # Obtiene el archivo del avatar
-            if file and allowed_file(file.filename): # Verifica si el archivo es válido
-                filename = secure_filename(file.filename) # Obtiene el nombre seguro del archivo
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)) # Guarda el archivo
-                avatar_path = 'uploads/' + filename # Define la ruta del avatar
-                usuario.avatar = avatar_path # Actualiza la ruta del avatar del usuario
-                db.session.commit() # Guarda los cambios en la base de datos
-                return redirect(url_for('perfil')) # Redirige a la página de perfil
-            else: # Si el archivo no es válido
-                return "Archivo no permitido" # Muestra un mensaje de error
-        else: # Si no se cargó un avatar
-            return "No se seleccionó ningún archivo" # Muestra un mensaje de error
+@app.route('/actualizar_avatar', methods=['GET', 'POST'])
+@login_required
+def actualizar_avatar():
+    usuario = current_user
+    if request.method == 'POST':
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                avatar_path = 'uploads/' + filename
+                usuario.avatar = avatar_path
+                db.session.commit()
+                return redirect(url_for('perfil'))
+            else:
+                return "Archivo no permitido"
+        else:
+            return "No se seleccionó ningún archivo"
 
-    return render_template('actualizar_avatar.html') # Renderiza la plantilla actualizar_avatar.html
-# FINAL DEL REGISTRO DE USUARIO
+    # Obtener la ruta del avatar actual
+    current_avatar = usuario.avatar if usuario.avatar else None
+
+    return render_template('actualizar_avatar.html', current_avatar=current_avatar)
 
 
 @app.route("/logout")
