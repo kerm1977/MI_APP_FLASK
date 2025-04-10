@@ -1,57 +1,196 @@
 {% extends "base.html" %}
 {% block content %}
 
+<style>
+  .profile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+    max-width: 600px;
+    position: relative;
+  }
+
+  .profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 3px solid #007bff;
+    position: relative;
+  }
+
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .profile-avatar .edit-icon {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .profile-avatar .edit-icon::before {
+    content: "+";
+    font-size: 1.2rem;
+  }
+
+  .profile-details {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .profile-details p {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .profile-details strong {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .profile-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .profile-actions a {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+  }
+
+  .profile-actions a.primary {
+    background-color: #007bff;
+  }
+
+  .profile-actions a.info {
+    background-color: #17a2b8;
+  }
+
+  .profile-actions a.danger {
+    background-color: #dc3545;
+  }
+
+  .profile-actions a:hover {
+    opacity: 0.8;
+  }
+
+  .notification {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 5px;
+  }
+
+  .notification.is-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .notification.is-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .other-actions {
+    margin-top: 2rem;
+    text-align: center;
+  }
+
+  .other-actions a {
+    margin: 0 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    color: #007bff;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .other-actions a:hover {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .main-title {
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  .main-title h1 {
+    font-size: 2.5rem;
+    color: #333;
+  }
+</style>
+
 <div class="container is-fluid">
-    <div class="main-title has-text-centered">
-        <h1 class="title">{{ titulo }}</h1>
-    </div>
+  <div class="main-title">
+    <h1>{{ titulo }}</h1>
+  </div>
 </div>
 
-<section class="section">
-    <div class="container">
-        <div class="box no-shadow">
-            <h2 class="subtitle">Perfil</h2>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="notification is-{{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+<div class="profile-container">
+  {% if usuario.avatar %}
+  <div class="profile-avatar">
+    <img src="{{ url_for('static', filename=usuario.avatar) }}" alt="Avatar">
+    <a href="{{ url_for('actualizar_avatar') }}" class="edit-icon"></a>
+  </div>
+  {% endif %}
 
-            <p><strong>Nombre:</strong> {{ usuario.name }}</p>
-            <p><strong>Primer Apellido:</strong> {{ usuario.first_last_name }}</p>
-            <p><strong>Segundo Apellido:</strong> {{ usuario.second_last_name }}</p>
-            <p><strong>Teléfono:</strong> {{ usuario.phone_number }}</p>
-            <p><strong>Email:</strong> {{ usuario.email }}</p>
-
-            {% if usuario.avatar %}
-                <figure class="image is-128x128">
-                    <img class="is-rounded" src="{{ url_for('static', filename=usuario.avatar) }}" alt="Avatar">
-                </figure>
-            {% endif %}
-
-            <div class="mt-4">
-                <a class="button is-primary" href="{{ url_for('actualizar_usuario', user_id=usuario.id) }}">Actualizar Perfil</a>
-                <a class="button is-info" href="{{ url_for('actualizar_avatar') }}">Actualizar Avatar</a>
-                <a class="button is-danger" href="{{ url_for('logout') }}">Cerrar Sesión</a>
-            </div>
-            <hr>
-        </div>
+  <div class="profile-details">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="notification is-{{ category }}">
+      {{ message }}
     </div>
-</section>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
 
+    <p><strong>Nombre:</strong> {{ usuario.name }}</p>
+    <p><strong>Primer Apellido:</strong> {{ usuario.first_last_name }}</p>
+    <p><strong>Segundo Apellido:</strong> {{ usuario.second_last_name }}</p>
+    <p><strong>Teléfono:</strong> {{ usuario.phone_number }}</p>
+    <p><strong>Email:</strong> {{ usuario.email }}</p>
+  </div>
 
+  <div class="profile-actions">
+    <a class="primary" href="{{ url_for('actualizar_usuario', user_id=usuario.id) }}"><span class="icon-pencil2"></span></a>
+    <a class="info" href="{{ url_for('actualizar_avatar') }}"><span class="icon-image"></span></a>
+    <a class="danger" href="{{ url_for('logout') }}"><span class="icon-switch"></span></a>
+  </div>
+</div>
 
-<section class="section">
-    <div class="container">
-        <div class="buttons">
-            <a class="button is-link" href="#">Contactos</a>
-            <a class="button is-link" href="{{ url_for('users') }}">Ver usuarios registrados</a>
-        </div>
-    </div>
-</section>
+<div class="other-actions">
+  <a href="#">Contactos</a>
+  <a href="{{ url_for('users') }}">Ver usuarios registrados</a>
+</div>
 
 {% endblock %}

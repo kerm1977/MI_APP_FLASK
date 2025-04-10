@@ -1,0 +1,58 @@
+<div class="field">
+    <label class="label" for="title">Título:</label>
+    <div class="control">
+        <input class="input" type="text" id="title" name="title" value="{{ post.title if post }}" required>
+    </div>
+</div>
+
+
+
+<div class="field">
+    <label class="label" for="content">Contenido:</label>
+    <div class="control">
+        <textarea class="textarea" id="" name="content" required>{{ post.content if post }}</textarea>
+    </div>
+</div>
+
+
+
+
+<div id="file-js-example" class="file has-name">
+    <label class="file-label">
+        <input class="file-input" type="file" name="image" id="image-input" accept="image/*" />
+        <span class="file-cta">
+            <span class="file-icon">
+                <span class="icon-cloud-upload"></span>
+            </span>
+            <span class="file-label"></span>
+        </span>
+        <span class="file-name">Ninguna imagen seleccionada</span>
+    </label>
+    <p id="file-error" style="color: red; display: none;">Error: Archivo no válido.</p>
+</div>
+
+<script>
+    const fileInput = document.querySelector("#file-js-example input[type=file]");
+                const fileName = document.querySelector("#file-js-example .file-name");
+                const fileError = document.querySelector("#file-error");
+
+                fileInput.onchange = () => {
+                    if (fileInput.files.length > 0) {
+                        const file = fileInput.files[0];
+                        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                        const maxSize = 16 * 1024 * 1024; // 16MB
+
+                        if (!allowedTypes.includes(file.type) || file.size > maxSize) {
+                            fileError.style.display = 'block';
+                            fileName.textContent = 'Ninguna imagen seleccionada';
+                            fileInput.value = ''; // Reset file input
+                            return;
+                        }
+
+                        fileError.style.display = 'none';
+                        fileName.textContent = file.name;
+                    } else {
+                        fileName.textContent = 'Ninguna imagen seleccionada';
+                    }
+                };
+</script>

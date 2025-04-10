@@ -13,14 +13,17 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, TimeField, FloatField, IntegerField, BooleanField, FileField, SubmitField
 from wtforms.validators import DataRequired
 import requests
-from bs4 import BeautifulSoup
 import secrets #videos
 import math
 import secrets
 from authlib.integrations.flask_client import OAuth
-
-
-
+from flask import send_from_directory #Permite ver la imagen en el users
+# from recuperacion_contraseña import crear_modulo_recuperacion_contraseña # Importacion del modulo.
+from urllib.parse import urlparse
+import csv
+from flask import send_file
+from io import BytesIO, StringIO # Add this line to import BytesIO and StringIO.
+import io
 
 
 app = Flask(__name__) # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
@@ -46,48 +49,6 @@ def allowed_file(filename):
 
 
 
-
-# AREA DE RECUPERACIÓN DE CONTRASEÑA
-app.secret_key = secrets.token_hex(16) # Genera una clave secreta segura
-# Configuración de Flask-Mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'tu_correo@gmail.com'
-app.config['MAIL_PASSWORD'] = 'tu_contraseña_de_aplicación'
-# AREA DE RECUPERACIÓN DE CONTRASEÑA
-
-
-# Configuración de OAuth
-oauth = OAuth(app)
-
-google = oauth.register(
-    name='google',
-    client_id='TU_CLIENT_ID_GOOGLE',
-    client_secret='TU_CLIENT_SECRET_GOOGLE',
-    access_token_url='https://oauth2.googleapis.com/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
-    client_kwargs={'scope': 'email profile'},
-)
-
-facebook = oauth.register(
-    name='facebook',
-    client_id='TU_APP_ID_FACEBOOK',
-    client_secret='TU_APP_SECRET_FACEBOOK',
-    access_token_url='https://graph.facebook.com/oauth/access_token',
-    access_token_params=None,
-    authorize_url='https://www.facebook.com/v12.0/dialog/oauth',
-    authorize_params=None,
-    api_base_url='https://graph.facebook.com/v12.0/',
-    client_kwargs={'scope': 'email public_profile'},
-)
-
-
-
-
 class User(UserMixin, db.Model): # Define el modelo de usuario (Depende de db)
     id = db.Column(db.Integer, primary_key=True) # Define el ID del usuario (Depende de db)
     name = db.Column(db.String(100), nullable=False) # Define el nombre del usuario (Depende de db)
@@ -98,6 +59,7 @@ class User(UserMixin, db.Model): # Define el modelo de usuario (Depende de db)
     password_hash = db.Column(db.String(128), nullable=False) # Define el hash de la contraseña del usuario (Depende de db)
     avatar = db.Column(db.String(200)) # Define la ruta del avatar del usuario (Depende de db)
     registration_count = db.Column(db.Integer, default=0) # Define el contador de registros del usuario (Depende de db)
+    posts = db.relationship('Post', backref='author', lazy=True) # Add this line
     def set_password(self, password): # Define un método para establecer la contraseña del usuario (Depende de generate_password_hash)
         self.password_hash = generate_password_hash(password) # Genera el hash de la contraseña
 
@@ -108,12 +70,9 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    image = db.Column(db.String(100))
+    image = db.Column(db.String(200))
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-
-
-
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_post_user'))
 
 class Tarea(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -124,7 +83,6 @@ class Tarea(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id)) # Obtiene el usuario de la base de datos
 
-
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200))
@@ -132,49 +90,39 @@ class Video(db.Model):
     video_url = db.Column(db.String(200))
     image_url = db.Column(db.String(200))  # Nuevo campo para la URL de la imagen
 
-def obtener_tipo_cambio_bcr():
-    try:
-        url = "https://gee.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?CodCuadro=401"
-        response = requests.get(url)
-        response.raise_for_status()  # Lanza una excepción para errores HTTP
-
-        soup = BeautifulSoup(response.content, "html.parser")
-        tabla = soup.find("table", {"id": "tblCuadro"})
-        filas = tabla.find_all("tr")
-
-        tipo_compra = None
-        tipo_venta = None
-
-        for fila in filas:
-            celdas = fila.find_all("td")
-            if len(celdas) >= 3:
-                descripcion = celdas[0].text.strip()
-                valor = celdas[2].text.strip()
-                if "Compra" in descripcion:
-                    tipo_compra = valor
-                elif "Venta" in descripcion:
-                    tipo_venta = valor
-        return tipo_compra, tipo_venta
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error al obtener los datos: {e}")
-        return None, None
-    except AttributeError:
-        print("Error al parsear los datos.")
-        return None, None
+class Contacto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    apellido1 = db.Column(db.String(100), nullable=False)
+    apellido2 = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100))
+    telefono = db.Column(db.String(20))
+    celular = db.Column(db.String(20))
+    empresa = db.Column(db.String(100))
+    categoria = db.Column(db.String(50))
 
 
 @app.route("/")
 @app.route("/home")
 @app.route("/index")
 def index():
-    tipo_compra, tipo_venta = obtener_tipo_cambio_bcr()
-    print("Función index() ejecutada")
     title = "Este es el Index"
     page = request.args.get('page', 1, type=int)
     per_page = 5
     posts_pagination = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=per_page)
-    return render_template('index.html', posts_pagination=posts_pagination, title=title, tipo_compra=tipo_compra, tipo_venta=tipo_venta)
+
+    for post in posts_pagination.items:
+        # Imprime los IDs y tipos de datos para depuración
+        if current_user.is_authenticated:
+            print(f"current_user.id: {current_user.id}, type: {type(current_user.id)}")
+        else:
+            print("Usuario no autenticado")
+        print(f"post.user_id: {post.user_id}, type: {type(post.user_id)}")
+
+        # Asegura que user_id sea un entero
+        post.user_id = int(post.user_id) if post.user_id else None
+
+    return render_template('index.html', posts_pagination=posts_pagination, title=title)
     
 # version
 @app.route('/version', methods=['GET', 'POST'])
@@ -206,91 +154,13 @@ def borrar_tarea(tarea_id):
 # version
 
 
-# GOOGLE Y FACEBOOK
-@app.route('/google/login')
-def google_login():
-    redirect_uri = url_for('google_auth', _external=True)
-    return google.authorize_redirect(redirect_uri)
-
-@app.route('/google/auth')
-def google_auth():
-    token = google.authorize_access_token()
-    resp = google.get('userinfo')
-    user_info = resp.json()
-    email = user_info['email']
-    name = user_info['name']
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        # Crea un nuevo usuario
-        user = User(name=name, email=email)
-        db.session.add(user)
-        db.session.commit()
-    login_user(user)
-    return redirect(url_for('index'))
-
-@app.route('/facebook/login')
-def facebook_login():
-    redirect_uri = url_for('facebook_auth', _external=True)
-    return facebook.authorize_redirect(redirect_uri)
-
-@app.route('/facebook/auth')
-def facebook_auth():
-    token = facebook.authorize_access_token()
-    resp = facebook.get('me?fields=id,name,email')
-    user_info = resp.json()
-    email = user_info['email']
-    name = user_info['name']
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        # Crea un nuevo usuario
-        user = User(name=name, email=email)
-        db.session.add(user)
-        db.session.commit()
-    login_user(user)
-    return redirect(url_for('index'))
-# GOOGLE Y FACEBOOK
-
-
-
-# RECUPERACION DE CONTRASEÑA
-@app.route('/recuperar_contraseña', methods=['GET', 'POST'])
-def recuperar_contraseña():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        # Lógica para generar un token de recuperación y enviar un correo
-        token = secrets.token_urlsafe(16)
-        # Aquí debes guardar el token y el email en la base de datos
-        # Ejemplo: guardar_token_en_bd(email, token)
-        # Luego enviar el correo
-        msg = Message('Recuperación de Contraseña', sender='your_email@example.com', recipients=[email])
-        msg.body = f'Para restablecer tu contraseña, haz clic en el siguiente enlace: {url_for("restablecer_contraseña", token=token, _external=True)}'
-        mail.send(msg)
-        flash('Se ha enviado un correo electrónico con instrucciones para restablecer tu contraseña.', 'success')
-        return redirect(url_for('login'))
-    return render_template('recuperar_contraseña.html')
-
-@app.route('/restablecer_contraseña/<token>', methods=['GET', 'POST'])
-def restablecer_contraseña(token):
-    # Lógica para verificar el token y mostrar el formulario de restablecimiento
-    # Ejemplo: email = obtener_email_de_token(token)
-    # Si el token es válido, mostrar el formulario
-    if request.method == 'POST':
-        password = request.form.get('password')
-        # Lógica para actualizar la contraseña en la base de datos
-        # Ejemplo: actualizar_contraseña(email, password)
-        flash('Tu contraseña ha sido restablecida con éxito.', 'success')
-        return redirect(url_for('login'))
-    return render_template('restablecer_contraseña.html', token=token)
-# RECUPERACION DE CONTRASEÑA
 
 
 
 
 
 
-# ver imagenes
+# VER IMAGENES Y POSTS
 @app.route('/post/<int:post_id>')
 def post(post_id):
     post = Post.query.get_or_404(post_id)
@@ -298,6 +168,7 @@ def post(post_id):
 
 
 @app.route('/new', methods=['GET', 'POST'])
+@login_required # add this to ensure user is logged in
 def new_post():
     if request.method == 'POST':
         title = request.form['title']
@@ -317,7 +188,7 @@ def new_post():
                 filename = secure_filename(image.filename)
                 try:
                     image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow())
+                    post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow(), user_id=current_user.id) # assign user_id
                     db.session.add(post)
                     db.session.commit()
                     flash('Publicación creada con éxito', 'success')
@@ -331,7 +202,7 @@ def new_post():
                 return render_template('new_post.html')
 
         else: # no image uploaded.
-            post = Post(title=title, content=content, image=None, date_posted=datetime.utcnow())
+            post = Post(title=title, content=content, image=None, date_posted=datetime.utcnow(), user_id=current_user.id) # assign user_id
             try:
                 db.session.add(post)
                 db.session.commit()
@@ -420,7 +291,7 @@ def delete_post(post_id):
 def create_vids():
     if request.method == 'POST':
         title = request.form.get('title')
-        detail = request.form.get('detail')
+        detail = request.form['detail'] # Cambiado 'content' a 'detail'
         video_url = request.form.get('video_url')
         image = request.files.get('image')
 
@@ -498,7 +369,7 @@ def edit_video(video_id):
     video = Video.query.get_or_404(video_id)
     if request.method == 'POST':
         video.title = request.form['title']
-        video.detail = request.form['detail']
+        video.detail = request.form['detail'] # Corrección: usa 'detail' en lugar de 'content'
         video.video_url = request.form['video_url']
         image = request.files.get('image')
 
@@ -512,13 +383,7 @@ def edit_video(video_id):
         return redirect(url_for('videos'))
     return render_template('edit_video.html', video=video)
 
-@app.route('/videos/delete/<int:video_id>')
-def delete_video(video_id):
-    video = Video.query.get_or_404(video_id)
-    db.session.delete(video)
-    db.session.commit()
-    flash('Video eliminado correctamente', 'success')
-    return redirect(url_for('videos'))
+
 
 @app.route('/videos/delete_confirm/<int:video_id>')
 def delete_video_confirm(video_id):
@@ -529,31 +394,47 @@ def delete_video_confirm(video_id):
     return redirect(url_for('videos'))
 
 
-
-
-
-
-
-@app.route('/users', methods=['GET', 'POST'])
-@login_required
+ # from flask import send_from_directory 
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/users', methods=['GET'])
 def users():
-    search_letter = request.args.get('letter')  # Obtiene la letra de búsqueda de la URL
+    titulo = "Lista de Usuarios"
+    search_term = request.args.get('search', '').lower()  # Convertir a minúsculas
 
-    if search_letter:
-        all_users = User.query.filter(User.name.startswith(search_letter)).order_by(User.name).all()
-        user_count = len(all_users)
-        users_by_letter = {search_letter: all_users}  # Crea un diccionario con solo la letra buscada
-    else:
-        all_users = User.query.order_by(User.name).all()
-        user_count = len(all_users)
+    if search_term:
+        # Búsqueda por nombre, apellido, teléfono, email o cualquier coincidencia parcial
+        users = User.query.filter(
+            db.or_(
+                User.name.ilike('%' + search_term + '%'),
+                User.first_last_name.ilike('%' + search_term + '%'),
+                User.second_last_name.ilike('%' + search_term + '%'),
+                User.phone_number.ilike('%' + search_term + '%'),
+                User.email.ilike('%' + search_term + '%')
+            )
+        ).all()
+
+        user_count = len(users)
         users_by_letter = {}
-        for user in all_users:
+        for user in users:
+            first_letter = user.name[0].upper()
+            if first_letter not in users_by_letter:
+                users_by_letter[first_letter] = []
+            users_by_letter[first_letter].append(user)
+    else:
+        # Si no hay término de búsqueda, muestra todos los usuarios
+        users = User.query.all()
+        user_count = len(users)
+        users_by_letter = {}
+        for user in users:
             first_letter = user.name[0].upper()
             if first_letter not in users_by_letter:
                 users_by_letter[first_letter] = []
             users_by_letter[first_letter].append(user)
 
-    return render_template('users.html', users_by_letter=users_by_letter, user_count=user_count, search_letter=search_letter)
+    return render_template('users.html', titulo=titulo, users_by_letter=users_by_letter, user_count=user_count, search_term=search_term)
+
 
 
 # REGISTRO DE USUARIO
@@ -668,6 +549,7 @@ def actualizar_avatar():
     return render_template('actualizar_avatar.html', current_avatar=current_avatar)
 
 
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -694,6 +576,84 @@ def page_not_found(e): # Define la función para manejar errores 404
 @app.errorhandler(500) # Define un manejador de errores para errores 500 (Depende de render_template)
 def server_not_found(e): # Define la función para manejar errores 500
     return render_template('500.html'), 500 # Renderiza la plantilla 500.html
+
+
+
+
+# AGENDA
+
+@app.route('/agenda', methods=['GET', 'POST'])
+@login_required
+def agenda():
+    if request.method == 'POST':
+        if 'nombre' in request.form:
+            nombre = request.form['nombre']
+            apellido1 = request.form['apellido1']
+            apellido2 = request.form['apellido2']
+            email = request.form['email']
+            telefono = request.form['telefono']
+            celular = request.form['celular']
+            empresa = request.form['empresa']
+            categoria = request.form['categoria']
+
+            nuevo_contacto = Contacto(nombre=nombre, apellido1=apellido1, apellido2=apellido2, email=email, telefono=telefono, celular=celular, empresa=empresa, categoria=categoria)
+            db.session.add(nuevo_contacto)
+            db.session.commit()
+            return redirect(url_for('agenda'))
+
+    contactos = Contacto.query.all()
+    return render_template('agenda.html', contactos=contactos)
+
+@app.route('/agenda/editar/<int:contacto_id>', methods=['GET', 'POST'])
+@login_required
+def editar_contacto(contacto_id):
+    contacto = Contacto.query.get_or_404(contacto_id)
+    if request.method == 'POST':
+        contacto.nombre = request.form['nombre']
+        contacto.apellido1 = request.form['apellido1']
+        contacto.apellido2 = request.form['apellido2']
+        contacto.email = request.form['email']
+        contacto.telefono = request.form['telefono']
+        contacto.celular = request.form['celular']
+        contacto.empresa = request.form['empresa']
+        contacto.categoria = request.form['categoria']
+        db.session.commit()
+        return redirect(url_for('agenda'))
+    return render_template('editar_contacto.html', contacto=contacto)
+
+@app.route('/agenda/borrar/<int:contacto_id>', methods=['POST'])
+@login_required
+def borrar_contacto(contacto_id):
+    contacto = Contacto.query.get_or_404(contacto_id)
+    db.session.delete(contacto)
+    db.session.commit()
+    return redirect(url_for('agenda'))
+
+@app.route('/agenda/vcard/<int:contacto_id>')
+@login_required
+def contacto_vcard(contacto_id):
+    contacto = Contacto.query.get_or_404(contacto_id)
+
+    # Generar el contenido del archivo vCard
+    vcard = f"""BEGIN:VCARD
+VERSION:3.0
+FN:{contacto.nombre} {contacto.apellido1} {contacto.apellido2}
+N:{contacto.apellido1};{contacto.nombre};;;
+TEL;TYPE=WORK,VOICE:{contacto.telefono}
+TEL;TYPE=CELL,VOICE:{contacto.celular}
+EMAIL:{contacto.email}
+ORG:{contacto.empresa}
+CATEGORIES:{contacto.categoria}
+END:VCARD
+"""
+
+    # Crear un objeto BytesIO con el contenido del archivo vCard
+    output = BytesIO(vcard.encode('utf-8'))
+
+    # Devolver el archivo vCard como una descarga
+    return send_file(output, download_name=f'{contacto.nombre}_{contacto_id}.vcf', mimetype='text/vcard', as_attachment=True)
+
+
 
 login_manager = LoginManager() # Crea una instancia de LoginManager para manejar la autenticación (Depende de app)
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)

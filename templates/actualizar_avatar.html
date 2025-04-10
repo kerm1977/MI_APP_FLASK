@@ -1,70 +1,143 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container" style="display: flex; justify-content: center;">
-    <div class="card" style="width: 100%; max-width: 600px;">
-        <div class="card-header">
-            <p class="card-header-title">Actualizar Avatar</p>
-        </div>
-        <div class="card-content">
-            <div class="content">
-                {% if current_avatar %}
-                    <div class="field" style="margin-bottom: 100px;">
-                        <label class="label">Avatar Actual:</label>
-                        <div class="control" style="text-align: center;">
-                            <figure class="image is-128x128" style="display: inline-block;">
-                                <img src="{{ url_for('static', filename=current_avatar) }}" alt="Avatar actual" class="is-rounded">
-                            </figure>
-                        </div>
-                    </div>
-                {% endif %}
+<style>
+  .profile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+    max-width: 600px;
+  }
 
-                <form method="post" enctype="multipart/form-data">
-                    <div class="field mt-5">
-                        <label class="label">Selecciona un Avatar:</label>
-                        <div class="control">
-                            <div class="file is-boxed" style="width: 100%;">
-                                <label class="file-label" style="width: 100%;">
-                                    <input class="file-input" type="file" name="resume" style="width: 100%;" />
-                                    <span class="file-cta">
-                                        <span class="file-icon">
-                                            <span class="icon-cloud-upload"></span>
-                                        </span>
-                                        <span class="file-label"> Choose a file… </span>
-                                    </span>
-                                    <span class="file-name"> No file uploaded </span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+  .profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 3px solid #007bff;
+  }
 
-                    <div class="field">
-                        <div class="control">
-                            <button class="button is-primary" type="submit">Actualizar Avatar</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .form-container {
+    width: 100%;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+  }
+
+  .form-button {
+    background-color: #007bff;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .form-button:hover {
+    background-color: #0056b3;
+  }
+
+  .file-input-container {
+    width: 100%;
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .file-input-label {
+    color: #007bff;
+    font-weight: 600;
+  }
+
+  .file-name {
+    margin-top: 0.5rem;
+    color: #555;
+  }
+
+  .main-title {
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  .main-title h1 {
+    font-size: 2.5rem;
+    color: #333;
+  }
+</style>
+
+<div class="container is-fluid">
+  <div class="main-title">
+    <h1>Actualizar Avatar</h1>
+  </div>
+</div>
+
+<div class="profile-container">
+  {% if current_avatar %}
+  <div class="profile-avatar">
+    <img src="{{ url_for('static', filename=current_avatar) }}" alt="Avatar actual">
+  </div>
+  {% endif %}
+
+  <div class="form-container">
+    <form method="post" enctype="multipart/form-data">
+      <div class="field">
+        <label class="form-label">Selecciona un Avatar:</label>
+        <div class="file-input-container">
+          <input class="file-input" type="file" name="avatar" id="file-input">
+          <label for="file-input" class="file-input-label">Choose a file…</label>
+          <span class="file-name" id="file-name">No file uploaded</span>
         </div>
-    </div>
+      </div>
+
+      <div class="field">
+        <button class="form-button" type="submit">Actualizar Avatar</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
-    const fileInput = document.querySelector("#file-js-example input[type=file]");
-    fileInput.onchange = () => {
-        if (fileInput.files.length > 0) {
-            const fileName = document.querySelector("#file-js-example .file-name");
-            fileName.textContent = fileInput.files[0].name;
-        }
-    };
-</script>
+  const fileInput = document.getElementById('file-input');
+  const fileNameDisplay = document.getElementById('file-name');
 
-<style>
-    @media (min-width: 768px) {
-        form {
-            width: 500px;
-        }
+  fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) {
+      fileNameDisplay.textContent = this.files[0].name;
+    } else {
+      fileNameDisplay.textContent = 'No file uploaded';
     }
-</style>
+  });
+</script>
 
 {% endblock %}

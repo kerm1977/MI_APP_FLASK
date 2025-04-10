@@ -1,4 +1,5 @@
-{% extends "base.html" %}
+{% extends "base.html" %}  {# Asume que tienes un archivo base.html #}
+
 {% block content %}
 <section class="section">
     <div class="container">
@@ -6,11 +7,20 @@
         <div class="columns is-centered">
             <div class="column is-half">
                 <div class="box">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="notification is-{{ category }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
                     <form method="post">
                         <div class="field">
                             <label class="label">Email</label>
                             <div class="control">
-                                <input class="input" type="email" name="email" placeholder="Email" required>
+                                <input class="input" type="email" name="email" placeholder="Tu email" required>
                             </div>
                         </div>
                         <div class="field">
