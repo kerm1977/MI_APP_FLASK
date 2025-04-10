@@ -123,7 +123,7 @@ def index():
         post.user_id = int(post.user_id) if post.user_id else None
 
     return render_template('index.html', posts_pagination=posts_pagination, title=title)
-    
+
 # version
 @app.route('/version', methods=['GET', 'POST'])
 def version():
@@ -151,7 +151,7 @@ def borrar_tarea(tarea_id):
     db.session.delete(tarea)
     db.session.commit()
     return redirect(url_for('version'))
-# version
+# versionn
 
 
 
