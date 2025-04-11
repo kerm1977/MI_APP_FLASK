@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+    
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/p.png') }}">
 </head>
 
@@ -12,9 +13,15 @@
 
 
 {% include "navbar.html" %}
+<div class="container">
+    <div class="main-title has-text-centered">
+    <h1 class="title ">{{titulo}}</h1>
+   </div>
+</div>
+
 
     <main>
-        <div class="container is-fluid">
+        <div class="container">
 
             {% include 'flash.html' %}
 
@@ -28,7 +35,6 @@
 
 
 
-
     <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
     <script src="{{ url_for('static', filename='js/buscador.js') }}"></script>
     <script src="{{ url_for('static', filename='js/cerrar.js') }}"></script>
@@ -37,7 +43,13 @@
     <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+     <!--Scroll arriba -->
     <a href="#0" class="cd-top">Top</a>
+    <script src="{{ url_for('static', filename='js/btntop.js') }}"></script>
+    <script src="js/main.js"></script>
+    <!--Fin scroll arriba -->
+
     <script src="{{ url_for('static', filename='js/jquery111.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/mostrar.js') }}"></script>

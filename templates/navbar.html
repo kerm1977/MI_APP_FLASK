@@ -1,4 +1,3 @@
-
 <nav class="navbar navbar-expand-lg navbar-dark text-white-" style="background-color: orange;">    <div class="container">
         <a class="navbar-brand" href="#">LA TRIBU</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,16 +24,23 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('logout') }}">Salir</a>
                 </li>
+               
+
+
+
                 {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Inicio</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('videos') }}">Videos</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('login') }}">Entrar</a>
                 </li>
-                <li class="nav-item">
+               <!--  <li class="nav-item">
                     <a class="nav-link" href="#">Flyers</a>
-                </li>
+                </li> -->
                 {% endif %}
                 {% if tipo_compra and tipo_venta %}
                 <li class="nav-item">

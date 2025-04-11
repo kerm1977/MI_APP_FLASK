@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
+
 <section class="section">
     <div class="container">
-        <h1 class="title">Nueva publicación</h1>
         <form action="{{ url_for('new_post') }}" method="POST" enctype="multipart/form-data">
             {% include 'post_form_fields.html' %}
             <div class="field">
                 <div class="control">
-                    <button id="publicarBtn" class="button is-primary" type="submit">Publicar</button>
+                    <button id="publicarBtn" class="button is-primary btn btn-primary" type="submit">Publicar</button>
                 </div>
             </div>
         </form>

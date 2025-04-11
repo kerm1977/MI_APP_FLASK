@@ -178,6 +178,7 @@ def post(post_id):
 @app.route('/new', methods=['GET', 'POST'])
 @login_required # add this to ensure user is logged in
 def new_post():
+    titulo = "Crear Un Nuevo Post"
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
@@ -221,13 +222,14 @@ def new_post():
                 flash(f'Error al crear la publicación: {e}', 'danger')
                 return render_template('new_post.html', error=str(e))
 
-    return render_template('new_post.html')
+    return render_template('new_post.html', titulo=titulo)
 
 
 
 @app.route('/edit/<int:post_id>', methods=['GET', 'POST'])
 @login_required  # Requiere que el usuario esté logueado
 def edit_post(post_id):
+    titulo = "Editar el Post"
     post = Post.query.get_or_404(post_id)
     if post.user_id != current_user.id: # check if the user is the post's author
         flash("No tienes permiso para editar este post.", "danger")
@@ -256,7 +258,7 @@ def edit_post(post_id):
 
         db.session.commit()
         return redirect(url_for('post', post_id=post.id))
-    return render_template('edit_post.html', post=post)
+    return render_template('edit_post.html', post=post, titulo=titulo)
 
 
 @app.route('/delete/<int:post_id>', methods=['POST'])
@@ -302,6 +304,7 @@ def crear_video():
 
 @app.route('/videos', methods=['GET', 'POST'])
 def videos():
+    titulo = "Videos de La Tribu"
     if request.method == 'POST':
         title = request.form['titulo']
         detail = request.form['descripcion']
@@ -320,7 +323,7 @@ def videos():
         return redirect(url_for('videos'))
 
     videos = Video.query.all()
-    return render_template('videos.html', videos=videos)
+    return render_template('videos.html', videos=videos, titulo=titulo)
 
 @app.route('/videos/edit/<int:video_id>', methods=['GET', 'POST'])
 def edit_video(video_id):

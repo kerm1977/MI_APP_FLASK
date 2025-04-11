@@ -27,7 +27,7 @@
                 {% if video.video_url %}
                 <a href="{{ video.video_url }}" target="_blank">
                     <img src="{{ url_for('static', filename='uploads/' + video.image_url) }}" alt="Imagen"
-                        style="max-width: 100px;">
+                        style="max-width: 100px;" class="mt-5">
                 </a>
                 {% else %}
                 <img src="{{ url_for('static', filename='uploads/' + video.image_url) }}" alt="Imagen"
