@@ -454,29 +454,60 @@ def registro(): # Define la función para el registro de usuarios
         return redirect(url_for('login')) # Redirige a la página de inicio de sesión
     return render_template('registro.html') # Renderiza la plantilla registro.html
 
-@app.route('/actualizar_usuario/<int:user_id>', methods=['GET', 'POST']) # Define la ruta para actualizar un usuario (Depende de render_template, request, flash, User, db, login_required y url_for)
-@login_required # Requiere que el usuario esté autenticado
-def actualizar_usuario(user_id): # Define la función para actualizar un usuario
-    usuario = User.query.get_or_404(user_id) # Obtiene el usuario de la base de datos o muestra un error 404 si no existe
 
-    if request.method == 'POST': # Verifica si la solicitud es POST
-        usuario.name = request.form['nombre'] # Actualiza el nombre del usuario
-        usuario.first_last_name = request.form['apellido1'] # Actualiza el primer apellido del usuario
-        usuario.second_last_name = request.form['apellido2'] # Actualiza el segundo apellido del usuario
-        usuario.phone_number = request.form['telefono'] # Actualiza el número de teléfono del usuario
-        usuario.email = request.form['email'] # Actualiza el correo electrónico del usuario
 
-        if request.form.get('eliminar_usuario'): # Verifica si se solicitó eliminar el usuario
-            db.session.delete(usuario) # Elimina el usuario de la base de datos
-            db.session.commit() # Guarda los cambios en la base de datos
-            flash("Usuario eliminado correctamente.", "success") # Muestra un mensaje flash de éxito
-            return redirect(url_for('users')) # Redirige a la página de usuarios
 
-        db.session.commit() # Guarda los cambios en la base de datos
-        flash("Usuario actualizado correctamente.", "success") # Muestra un mensaje flash de éxito
-        return redirect(url_for('perfil')) # Redirige a la página de perfil
 
-    return render_template('actualizar_usuario.html', usuario=usuario) # Renderiza la plantilla actualizar_usuario.html
+
+
+@app.route('/actualizar_usuario/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def actualizar_usuario(user_id):
+    usuario = User.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        apellido1 = request.form['apellido1']
+        apellido2 = request.form['apellido2']
+        telefono = request.form['telefono']
+        email = request.form['email']
+
+        # Verifica si los datos son los mismos
+        if (nombre == usuario.name and
+            apellido1 == usuario.first_last_name and
+            apellido2 == usuario.second_last_name and
+            telefono == usuario.phone_number and
+            email == usuario.email):
+            flash("No se realizaron cambios en la información del usuario.", "info")
+            return redirect(url_for('actualizar_usuario', user_id=user_id))
+
+        usuario.name = nombre
+        usuario.first_last_name = apellido1
+        usuario.second_last_name = apellido2
+        usuario.phone_number = telefono
+        usuario.email = email
+
+        if request.form.get('eliminar_usuario'):
+            db.session.delete(usuario)
+            db.session.commit()
+            flash("Usuario eliminado correctamente.", "success")
+            return redirect(url_for('users'))
+
+        db.session.commit()
+        flash("Usuario actualizado correctamente.", "success")
+        return redirect(url_for('perfil'))
+
+    return render_template('actualizar_usuario.html', usuario=usuario)
+
+
+
+
+
+
+
+
+
+
 
 @app.route('/login', methods=['GET', 'POST']) # Define la ruta para el inicio de sesión (Depende de render_template, request, User, check_password_hash, login_user y url_for)
 def login(): # Define la función para el inicio de sesión
@@ -491,6 +522,17 @@ def login(): # Define la función para el inicio de sesión
         else: # Si el usuario no existe o la contraseña es incorrecta
             return "Email o contraseña incorrectos" # Muestra un mensaje de error
     return render_template('login.html') # Renderiza la plantilla login.html
+
+
+
+
+
+
+
+
+
+
+
 
 @app.route('/perfil') # Define la ruta para el perfil del usuario (Depende de render_template, current_user y login_required)
 @login_required # Requiere que el usuario esté autenticado
@@ -554,7 +596,6 @@ def server_not_found(e): # Define la función para manejar errores 500
 
 
 # AGENDA
-
 @app.route('/agenda', methods=['GET', 'POST'])
 @login_required
 def agenda():
@@ -577,22 +618,52 @@ def agenda():
     contactos = Contacto.query.all()
     return render_template('agenda.html', contactos=contactos)
 
-@app.route('/agenda/editar/<int:contacto_id>', methods=['GET', 'POST'])
-@login_required
+
+
+@app.route('/editar_contacto/<int:contacto_id>', methods=['GET', 'POST'])
 def editar_contacto(contacto_id):
     contacto = Contacto.query.get_or_404(contacto_id)
+
     if request.method == 'POST':
-        contacto.nombre = request.form['nombre']
-        contacto.apellido1 = request.form['apellido1']
-        contacto.apellido2 = request.form['apellido2']
-        contacto.email = request.form['email']
-        contacto.telefono = request.form['telefono']
-        contacto.celular = request.form['celular']
-        contacto.empresa = request.form['empresa']
-        contacto.categoria = request.form['categoria']
+        nombre = request.form['nombre']
+        apellido1 = request.form['apellido1']
+        apellido2 = request.form['apellido2']
+        email = request.form['email']
+        telefono = request.form['telefono']
+        celular = request.form['celular']
+        empresa = request.form['empresa']
+        categoria = request.form['categoria']
+
+        if (nombre == contacto.nombre and
+            apellido1 == contacto.apellido1 and
+            apellido2 == contacto.apellido2 and
+            email == contacto.email and
+            telefono == contacto.telefono and
+            celular == contacto.celular and
+            empresa == contacto.empresa and
+            categoria == contacto.categoria):
+            flash('No se realizaron cambios.', 'info')  # Mensaje si no hay cambios
+            return redirect(url_for('editar_contacto', contacto_id=contacto_id))
+
+        contacto.nombre = nombre
+        contacto.apellido1 = apellido1
+        contacto.apellido2 = apellido2
+        contacto.email = email
+        contacto.telefono = telefono
+        contacto.celular = celular
+        contacto.empresa = empresa
+        contacto.categoria = categoria
+
         db.session.commit()
-        return redirect(url_for('agenda'))
+        flash('Contacto actualizado correctamente.', 'success')
+        return redirect(url_for('contactos'))
+
     return render_template('editar_contacto.html', contacto=contacto)
+
+
+
+
+
 
 @app.route('/agenda/borrar/<int:contacto_id>', methods=['POST'])
 @login_required
