@@ -10,7 +10,8 @@
 
 <body>
 
-    {% include "navbar.html" %}
+
+{% include "navbar.html" %}
 
     <main>
         <div class="container is-fluid">
@@ -23,21 +24,10 @@
         </div>
     </main>
 
-    <footer class="footer mt-5">
-        <div class="content has-text-centered">
-            <p>
-                <strong>Hecho con </strong> <span class="icon-heart text-danger"></span> por La Tribu Hiking CR.
-                <div class="time text-center text-light"></div>
-            </p>
-            <p class="copyRight">
-                | <strong class="copyRight">&copy; lthiking</strong> |
-                <a href="{{ url_for('version') }}"><i>versión 1.0</i></a> |
-                <a href="https://www.facebook.com/LaTribuDeLosLibres/" target="_blank">
-                    <span class="icon-facebook"></span>
-                </a>
-            </p>
-        </div>
-    </footer>
+{% include "footer.html" %}
+
+
+
 
     <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
     <script src="{{ url_for('static', filename='js/buscador.js') }}"></script>
@@ -45,6 +35,7 @@
     <script src="{{ url_for('static', filename='js/eye.js') }}"></script>
     <script src="{{ url_for('static', filename='js/passError.js') }}"></script>
     <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <a href="#0" class="cd-top">Top</a>
     <script src="{{ url_for('static', filename='js/jquery111.js') }}"></script>
