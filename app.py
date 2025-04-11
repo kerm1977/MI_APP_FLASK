@@ -372,6 +372,7 @@ def actualizar_video(id):
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 @app.route('/users', methods=['GET'])
+@login_required
 def users():
     titulo = "Lista de Usuarios"
     search_term = request.args.get('search', '').lower()  # Convertir a minúsculas
