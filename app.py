@@ -42,6 +42,8 @@ login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depend
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
 
+
+
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -565,9 +567,10 @@ def actualizar_avatar():
             file = request.files['avatar']
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                avatar_path = 'uploads/' + filename
-                usuario.avatar = avatar_path
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                # Cambio aquí: guardar la ruta absoluta en la base de datos
+                usuario.avatar = filepath
                 db.session.commit()
                 return redirect(url_for('perfil'))
             else:
@@ -575,9 +578,7 @@ def actualizar_avatar():
         else:
             return "No se seleccionó ningún archivo"
 
-    # Obtener la ruta del avatar actual
     current_avatar = usuario.avatar if usuario.avatar else None
-
     return render_template('actualizar_avatar.html', current_avatar=current_avatar)
 
 
@@ -677,7 +678,7 @@ def editar_contacto(contacto_id):
     return render_template('editar_contacto.html', contacto=contacto)
 
 @app.route('/agenda/borrar/<int:contacto_id>', methods=['POST'])
-@login_required
+@login_required     
 def borrar_contacto(contacto_id):
     contacto = Contacto.query.get_or_404(contacto_id)
     db.session.delete(contacto)
