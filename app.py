@@ -1,3 +1,4 @@
+# IMPORTS
 from flask import Flask, render_template, request, redirect, url_for, flash, session  # Agrega 'session' aquí  # Importa las funciones necesarias de Flask (Todas las rutas y render_template dependen de esto)
 from flask_migrate import Migrate  # Importa Migrate para manejar migraciones de la base de datos (Depende de db y app)
 from werkzeug.security import generate_password_hash, check_password_hash # Importa funciones para manejar contraseñas seguras (Depende de la clase User)
@@ -26,6 +27,7 @@ from io import BytesIO, StringIO # Add this line to import BytesIO and StringIO.
 import io
 
 
+# CONFIG
 app = Flask(__name__) # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
@@ -46,6 +48,12 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS # No corchetes extras
+
+
+# EN CASO DE SEPARAR EL CÓDIGO BORRAR LOS IMPORTS YA LOS ARCHIVOS ESTÁN CREADOS 
+# from imports import *
+# from config import *
+
 
 
 

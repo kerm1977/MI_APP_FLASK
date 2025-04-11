@@ -82,10 +82,7 @@
                         <p class="card-text">{{ video.detail }}</p>
                     </div>
                     <div class="social-share">
-                        <a href="https://wa.me/?text={{ url_for('static', filename='uploads/' + video.image_url, _external=True) }}"
-                            target="_blank" title="Compartir en WhatsApp">
-                            <span class="icon-whatsapp"></span>
-                        </a>
+                        <a href="https://wa.me/?text={% if video.image_url %}{{ url_for('static', filename='uploads/' + video.image_url, _external=True) }}{% else %}Imagen no disponible{% endif %}"
                         <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('static', filename='uploads/' + video.image_url, _external=True) }}"
                             target="_blank" title="Compartir en Facebook">
                             <span class="icon-facebook"></span>
