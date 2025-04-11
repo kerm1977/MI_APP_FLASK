@@ -1,104 +1,118 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="flex_container">
-    <div class="container is-fluid">
-        <div class="main-title has-text-centered">
-            <h1 class="title ">{{titulo}}</h1>
-        </div>
-    </div>
 
-    <div class="container">
-        <form method="GET" action="{{ url_for('videos') }}" class="mb-4">
-            <div class="field has-addons">
-                <div class="control is-expanded">
-                    <input class="input search_video is-rounded" type="text" name="q" placeholder="Buscar videos..." value="{{ request.args.get('q', '') }}">
-                </div>
-                <div class="control">
-                    <button class="button is-info is-rounded">Buscar</button>
-                </div>
-            </div>
-        </form>
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Videos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .social-share {
+            display: flex;
+            justify-content: center; /* Centrar horizontalmente */
+            margin-top: 10px;
+            margin-bottom: 10px; /* Espacio debajo de los íconos */
+        }
 
-        {% if current_user.is_authenticated %}
-        <h1 class="title">Agregar Video</h1>
-        <form method="POST" action="/videos">
-        </form>
+        .social-share a {
+            margin: 0 10px; /* Espacio entre los íconos */
+            color: #333;
+            text-decoration: none;
+            font-size: 24px; /* Tamaño de los íconos */
+        }
+
+        .social-share a:hover {
+            color: #007bff;
+        }
+
+        .icon {
+            font-family: 'icomoon' !important;
+            speak: never;
+            font-style: normal;
+            font-weight: normal;
+            font-variant: normal;
+            text-transform: none;
+            line-height: 1;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: center; /* Centrar horizontalmente */
+            align-items: center; /* Centrar verticalmente */
+            margin-top: 10px;
+            margin-bottom: 10px; /* Espacio debajo de los botones */
+        }
+
+        .card-actions a,
+        .card-actions form {
+            margin: 0 5px; /* Espacio entre los botones */
+        }
+
+        .card-actions .btn {
+            font-size: 16px; /* Tamaño de los botones */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        <h1>Lista de Videos</h1>
+        {% if current_user.email == "kenth1977@gmail.com" or current_user.email == "jceciliano69@gmail.com" %}
+        <a href="{{ url_for('crear_video') }}" class="btn btn-success mb-3">Crear Video</a>
         {% endif %}
-
-        <div class="columns is-multiline">
-            {% for video in videos.items %}
-            <div class="column is-one-third">
-                <div class="card" style="box-shadow: none;">
-                    <div class="card-image">
-                        <a href="{{ video.video_url }}" target="_blank">
-                            {% if video.image_url %}
-                            <figure class="image is-16by9">
-                                <img class="search_video" src="{{ video.image_url }}" alt="Imagen del video" style="object-fit: cover;">
-                            </figure>
-                            {% endif %}
+        <div class="row">
+            {% for video in videos %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    {% if video.image_url %}
+                    {% if video.video_url %}
+                    <a href="{{ video.video_url }}" target="_blank">
+                        <img src="{{ url_for('static', filename='uploads/' + video.image_url) }}" class="card-img-top"
+                            alt="Imagen">
+                    </a>
+                    {% else %}
+                    <img src="{{ url_for('static', filename='uploads/' + video.image_url) }}" class="card-img-top"
+                        alt="Imagen">
+                    {% endif %}
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ video.title }}</h5>
+                        <p class="card-text">{{ video.detail }}</p>
+                    </div>
+                    <div class="social-share">
+                        <a href="https://wa.me/?text={{ url_for('static', filename='uploads/' + video.image_url, _external=True) }}"
+                            target="_blank" title="Compartir en WhatsApp">
+                            <span class="icon-whatsapp"></span>
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('static', filename='uploads/' + video.image_url, _external=True) }}"
+                            target="_blank" title="Compartir en Facebook">
+                            <span class="icon-facebook"></span>
                         </a>
                     </div>
-                    <div class="card-content">
-                        <p class="title">{{ video.title|default('Sin título', true) }}</p>
-                        <p class="subtitle">{{ video.detail|default('Sin descripción', true) }}</p>
-                        <div class="content">
-                            {% if video.video_url %}
-                            <a href="{{ video.video_url }}" target="_blank">Ver Video</a>
-                            {% else %}
-                            <p>No hay URL de video disponible.</p>
-                            {% endif %}
-                        </div>
-                        <hr>
-                        <div class="share-buttons">
-                            <a href="whatsapp://send?text={{ video.video_url|urlencode }}" target="_blank">
-                                <span class="icon-whatsapp"></span>
-                            </a>
-                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ video.video_url|urlencode }}" target="_blank">
-                                <span class="icon-facebook"></span>
-                            </a>
-                            <a href="https://www.instagram.com/" target="_blank">
-                                <span class="icon-instagram"></span>
-                            </a>
-                        </div>
+                    {% if current_user.email == "kenth1977@gmail.com" or
+                    current_user.email == "jceciliano69@gmail.com" %}
+                    <div class="card-actions">
+                        <a href="{{ url_for('actualizar_video', id=video.id) }}" class="btn btn-primary btn-sm"
+                            title="Editar">
+                            <span class="icon-pencil"></span>
+                        </a>
+                        <form method="POST" action="{{ url_for('borrar_video', id=video.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('¿Estás seguro de que quieres borrar este video?')" title="Borrar">
+                                <span class="icon-bin"></span>
+                            </button>
+                        </form>
                     </div>
-                    {% if current_user.is_authenticated %}
-                    <footer class="card-footer">
-                        <a href="/videos/edit/{{ video.id }}" class="card-footer-item">Editar</a>
-                        <a href="#" class="card-footer-item" onclick="confirmDelete('{{ url_for('delete_video_confirm', video_id=video.id) }}')">Eliminar</a>
-                    </footer>
                     {% endif %}
                 </div>
             </div>
             {% endfor %}
         </div>
-        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
-            {% if videos.has_prev %}
-            <a class="pagination-previous" href="{{ url_for('videos', page=videos.prev_num) }}">Anterior</a>
-            {% endif %}
-            {% if videos.has_next %}
-            <a class="pagination-next" href="{{ url_for('videos', page=videos.next_num) }}">Siguiente</a>
-            {% endif %}
-            <ul class="pagination-list">
-                {% for page_num in videos.iter_pages() %}
-                {% if page_num %}
-                {% if videos.page == page_num %}
-                <li><a class="pagination-link is-current" aria-label="Page {{ page_num }}">{{ page_num }}</a></li>
-                {% else %}
-                <li><a class="pagination-link" href="{{ url_for('videos', page=page_num) }}" aria-label="Goto page {{ page_num }}">{{ page_num }}</a></li>
-                {% endif %}
-                {% else %}
-                <li><span class="pagination-ellipsis">&hellip;</span></li>
-                {% endif %}
-                {% endfor %}
-            </ul>
-        </nav>
     </div>
-    <script>
-        function confirmDelete(deleteUrl) {
-            if (confirm("¿Estás seguro de que deseas eliminar este video?")) {
-                window.location.href = deleteUrl;
-            }
-        }
-    </script>
 </body>
-{% endblock %}
+
+</html>
+
+{%endblock%}

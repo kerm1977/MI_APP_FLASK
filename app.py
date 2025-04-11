@@ -287,82 +287,32 @@ def delete_post(post_id):
 
 
 
-@app.route('/create_vids', methods=['GET', 'POST'])
-def create_vids():
-    if request.method == 'POST':
-        title = request.form.get('title')
-        detail = request.form['detail'] # Cambiado 'content' a 'detail'
-        video_url = request.form.get('video_url')
-        image = request.files.get('image')
-
-        if not title or not video_url:
-            flash("Título y URL del video son obligatorios.", 'danger')
-            return redirect(request.referrer)
-
-        if not is_valid_url(video_url):
-            flash("URL del video no válida.", 'danger')
-            return redirect(request.referrer)
-
-        filename = None
-
-        if image and allowed_file(image.filename):
-            filename = secure_filename(image.filename)
-            try:
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            except Exception as e:
-                print(f"Error al guardar el archivo: {e}")
-                flash(f"Error al guardar el archivo: {e}", 'danger')
-                return redirect(request.referrer)
-
-        video = Video(title=title, detail=detail, video_url=video_url, image=filename, date_posted=datetime.utcnow())
-
-        try:
-            db.session.add(video)
-            db.session.commit()
-            flash('Video guardado con éxito', 'success')
-            return redirect(url_for('index'))  # Reemplaza 'index' con tu ruta de éxito
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error al guardar el video: {e}', 'danger')
-            return redirect(request.referrer)
-
-    return render_template('create_vids.html', titulo="Agregar Video")  # Reemplaza 'create_vids.html'
-
-def is_valid_url(url):
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except ValueError:
-        return False
-
+@app.route('/crear_video')
+def crear_video():
+    return render_template('crear_video.html')
     
 
 @app.route('/videos', methods=['GET', 'POST'])
-@app.route('/videos/page/<int:page>', methods=['GET', 'POST'])
-def videos(page=1):
+def videos():
     if request.method == 'POST':
-        title = request.form['title']
-        detail = request.form['detail']
-        video_url = request.form['video_url']
+        title = request.form['titulo']
+        detail = request.form['descripcion']
+        enlace = request.form['enlace']
 
-        new_video = Video(title=title, detail=detail, video_url=video_url)
-        db.session.add(new_video)
+        imagen = request.files['imagen']
+
+        filename = None
+        if imagen and allowed_file(imagen.filename):
+            filename = secure_filename(imagen.filename)
+            imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        video = Video(title=title, detail=detail, image_url=filename, video_url=enlace) # Usa 'video_url' aquí
+        db.session.add(video)
         db.session.commit()
-        flash('Video guardado correctamente', 'success')
         return redirect(url_for('videos'))
 
-    per_page = 6
-    query = request.args.get('q', '')
-
-    if query:
-        videos_list = Video.query.filter(or_(
-            Video.title.ilike(f"%{query}%"),
-            Video.detail.ilike(f"%{query}%")
-        )).paginate(page=page, per_page=per_page, error_out=False)
-    else:
-        videos_list = Video.query.paginate(page=page, per_page=per_page, error_out=False)
-
-    return render_template('videos.html', videos=videos_list)
+    videos = Video.query.all()
+    return render_template('videos.html', videos=videos)
 
 @app.route('/videos/edit/<int:video_id>', methods=['GET', 'POST'])
 def edit_video(video_id):
@@ -383,15 +333,38 @@ def edit_video(video_id):
         return redirect(url_for('videos'))
     return render_template('edit_video.html', video=video)
 
-
-
-@app.route('/videos/delete_confirm/<int:video_id>')
-def delete_video_confirm(video_id):
-    video = Video.query.get_or_404(video_id)
+@app.route('/borrar_video/<int:id>', methods=['POST'])
+def borrar_video(id):
+    video = Video.query.get_or_404(id)
+    if video.image_url: # Usa 'image_url' aquí
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], video.image_url)) # Usa 'image_url' aquí
     db.session.delete(video)
     db.session.commit()
-    flash('Video eliminado correctamente', 'success')
     return redirect(url_for('videos'))
+
+@app.route('/actualizar_video/<int:id>', methods=['GET', 'POST'])
+def actualizar_video(id):
+    video = Video.query.get_or_404(id)
+    if request.method == 'POST':
+        video.title = request.form['titulo']
+        video.detail = request.form['descripcion']
+        video.video_url = request.form['enlace']
+        imagen = request.files['imagen']
+
+        if imagen and allowed_file(imagen.filename):
+            if video.image_url:
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], video.image_url))
+            filename = secure_filename(imagen.filename)
+            imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            video.image_url = filename
+
+        db.session.commit()
+        return redirect(url_for('videos'))
+
+    return render_template('crear_video.html', video=video)
+
+
+
 
 
  # from flask import send_from_directory 
