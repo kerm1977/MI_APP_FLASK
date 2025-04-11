@@ -4,56 +4,66 @@
 <title>Actualizar Usuario</title>
 
 <body>
-    <div class="container">
-        <h1 class="title">Actualizar Usuario</h1>
+    <div class="container mt-4">
+        <h1 class="mb-4">Actualizar Usuario</h1>
 
         <form method="POST">
-            <div class="field">
-                <label class="label" for="nombre">Nombre:</label>
+            <div class="mb-3">
+                <label class="form-label" for="nombre">Nombre:</label>
                 <div class="control">
-                    <input class="input" type="text" id="nombre" name="nombre" value="{{ usuario.name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
+                    <input class="form-control" type="text" id="nombre" name="nombre" value="{{ usuario.name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)">
                 </div>
             </div>
 
-            <div class="field">
-                <label class="label" for="apellido1">Primer Apellido:</label>
+            <div class="mb-3">
+                <label class="form-label" for="apellido1">Primer Apellido:</label>
                 <div class="control">
-                    <input class="input" type="text" id="apellido1" name="apellido1" value="{{ usuario.first_last_name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
+                    <input class="form-control" type="text" id="apellido1" name="apellido1" value="{{ usuario.first_last_name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)">
                 </div>
             </div>
 
-            <div class="field">
-                <label class="label" for="apellido2">Segundo Apellido:</label>
+            <div class="mb-3">
+                <label class="form-label" for="apellido2">Segundo Apellido:</label>
                 <div class="control">
-                    <input class="input" type="text" id="apellido2" name="apellido2" value="{{ usuario.second_last_name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
+                    <input class="form-control" type="text" id="apellido2" name="apellido2" value="{{ usuario.second_last_name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)">
                 </div>
             </div>
 
-            <div class="field">
-                <label class="label" for="telefono">Teléfono:</label>
+            <div class="mb-3">
+                <label class="form-label" for="telefono">Teléfono:</label>
                 <div class="control">
-                    <input class="input" type="text" id="telefono" name="telefono" value="{{ usuario.phone_number }} minlength="8" maxlength="8" onkeyup="limpiarNumero(this)" onchange="limpiarNumero(this)">
+                    <input class="form-control" type="text" id="telefono" name="telefono" value="{{ usuario.phone_number }}" minlength="8" maxlength="8" onkeyup="limpiarNumero(this)" onchange="limpiarNumero(this)">
                 </div>
             </div>
 
-            <div class="field">
-                <label class="label" for="email">Email:</label>
+            <div class="mb-3">
+                <label class="form-label" for="email">Email:</label>
                 <div class="control">
-                    <input class="input" type="email" id="email" name="email" value="{{ usuario.email }}">
+                    <input class="form-control" type="email" id="email" name="email" value="{{ usuario.email }}">
                 </div>
             </div>
 
-            <div class="field is-grouped">
-                <div class="control">
-                    <button class="button is-primary" type="submit">Actualizar Usuario</button>
+            <div class="d-flex justify-content-start">
+                <div class="control me-2">
+                    <button class="btn btn-primary" type="submit">Actualizar Usuario</button>
                 </div>
                 <div class="control">
-                    <button class="button is-danger" type="submit" name="eliminar_usuario" value="1" onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario?')">Eliminar Usuario</button>
+                    <button class="btn btn-danger" type="submit" name="eliminar_usuario" value="1" onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario?')">Eliminar Usuario</button>
                 </div>
             </div>
         </form>
 
-        <a href="{{ url_for('users') }}">Volver a la lista de usuarios</a>
+        <a href="{{ url_for('users') }}" class="mt-3 d-block">Volver a la lista de usuarios</a>
     </div>
+    <script>
+        function evitarNumeros(input) {
+            input.value = input.value.replace(/[^a-zA-Z\s]/g, '');
+        }
 
-{%endblock%}
+        function limpiarNumero(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+        }
+    </script>
+</body>
+
+{% endblock %}
