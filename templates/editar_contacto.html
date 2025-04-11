@@ -18,15 +18,15 @@
         <div class="form-row">
             <div class="form-group col-md-4">
                 <label for="nombre" class="form-label">Nombre:</label>
-                <input type="text" name="nombre" value="{{ contacto.nombre }}" required class="form-control">
+                <input type="text" name="nombre" value="{{ contacto.nombre }}" required class="form-control" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
             </div>
             <div class="form-group col-md-4">
                 <label for="apellido1" class="form-label">Primer Apellido:</label>
-                <input type="text" name="apellido1" value="{{ contacto.apellido1 }}" required class="form-control">
+                <input type="text" name="apellido1" value="{{ contacto.apellido1 }}" required class="form-control" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
             </div>
             <div class="form-group col-md-4">
                 <label for="apellido2" class="form-label">Segundo Apellido:</label>
-                <input type="text" name="apellido2" value="{{ contacto.apellido2 }}" required class="form-control">
+                <input type="text" name="apellido2" value="{{ contacto.apellido2 }}" required class="form-control" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
             </div>
         </div>
         <div class="form-row">
@@ -36,11 +36,11 @@
             </div>
             <div class="form-group col-md-4">
                 <label for="telefono" class="form-label">Teléfono:</label>
-                <input type="tel" name="telefono" value="{{ contacto.telefono }}" class="form-control">
+                <input type="tel" name="telefono" value="{{ contacto.telefono }}" class="form-control" minlength="8" maxlength="8" onkeyup="limpiarNumero(this)" onchange="limpiarNumero(this)>
             </div>
             <div class="form-group col-md-4">
                 <label for="celular" class="form-label">Celular:</label>
-                <input type="tel" name="celular" value="{{ contacto.celular }}" class="form-control">
+                <input type="tel" name="celular" value="{{ contacto.celular }}" class="form-control" minlength="8" maxlength="8" onkeyup="limpiarNumero(this)" onchange="limpiarNumero(this)>
             </div>
         </div>
         <div class="form-row">

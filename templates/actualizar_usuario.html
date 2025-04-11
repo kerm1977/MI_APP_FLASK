@@ -11,28 +11,28 @@
             <div class="field">
                 <label class="label" for="nombre">Nombre:</label>
                 <div class="control">
-                    <input class="input" type="text" id="nombre" name="nombre" value="{{ usuario.name }}">
+                    <input class="input" type="text" id="nombre" name="nombre" value="{{ usuario.name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
                 </div>
             </div>
 
             <div class="field">
                 <label class="label" for="apellido1">Primer Apellido:</label>
                 <div class="control">
-                    <input class="input" type="text" id="apellido1" name="apellido1" value="{{ usuario.first_last_name }}">
+                    <input class="input" type="text" id="apellido1" name="apellido1" value="{{ usuario.first_last_name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
                 </div>
             </div>
 
             <div class="field">
                 <label class="label" for="apellido2">Segundo Apellido:</label>
                 <div class="control">
-                    <input class="input" type="text" id="apellido2" name="apellido2" value="{{ usuario.second_last_name }}">
+                    <input class="input" type="text" id="apellido2" name="apellido2" value="{{ usuario.second_last_name }}" onkeyup="evitarNumeros(this)" onchange="evitarNumeros(this)>
                 </div>
             </div>
 
             <div class="field">
                 <label class="label" for="telefono">Teléfono:</label>
                 <div class="control">
-                    <input class="input" type="text" id="telefono" name="telefono" value="{{ usuario.phone_number }}">
+                    <input class="input" type="text" id="telefono" name="telefono" value="{{ usuario.phone_number }} minlength="8" maxlength="8" onkeyup="limpiarNumero(this)" onchange="limpiarNumero(this)">
                 </div>
             </div>
 
