@@ -596,32 +596,31 @@ def server_not_found(e): # Define la función para manejar errores 500
 
 
 
-# AGENDA
 @app.route('/agenda', methods=['GET', 'POST'])
 @login_required
 def agenda():
     if request.method == 'POST':
-        if 'nombre' in request.form:
-            nombre = request.form['nombre']
-            apellido1 = request.form['apellido1']
-            apellido2 = request.form['apellido2']
-            email = request.form['email']
-            telefono = request.form['telefono']
-            celular = request.form['celular']
-            empresa = request.form['empresa']
-            categoria = request.form['categoria']
+        nombre = request.form['nombre']
+        apellido1 = request.form['apellido1']
+        apellido2 = request.form['apellido2']
+        email = request.form['email']
+        telefono = request.form['telefono']
+        celular = request.form['celular']
+        empresa = request.form['empresa']
+        categoria = request.form['categoria']
 
-            nuevo_contacto = Contacto(nombre=nombre, apellido1=apellido1, apellido2=apellido2, email=email, telefono=telefono, celular=celular, empresa=empresa, categoria=categoria)
-            db.session.add(nuevo_contacto)
-            db.session.commit()
-            return redirect(url_for('agenda'))
+        nuevo_contacto = Contacto(nombre=nombre, apellido1=apellido1, apellido2=apellido2, email=email, telefono=telefono, celular=celular, empresa=empresa, categoria=categoria)
+        db.session.add(nuevo_contacto)
+        db.session.commit()
+        flash('Contacto agregado correctamente.', 'success')
+        return redirect(url_for('agenda'))
 
     contactos = Contacto.query.all()
-    return render_template('agenda.html', contactos=contactos)
-
-
+    cantidad_contactos = Contacto.query.count() # Cuenta los registros
+    return render_template('agenda.html', contactos=contactos, cantidad_contactos=cantidad_contactos)
 
 @app.route('/editar_contacto/<int:contacto_id>', methods=['GET', 'POST'])
+@login_required
 def editar_contacto(contacto_id):
     contacto = Contacto.query.get_or_404(contacto_id)
 
@@ -657,14 +656,9 @@ def editar_contacto(contacto_id):
 
         db.session.commit()
         flash('Contacto actualizado correctamente.', 'success')
-        return redirect(url_for('contactos'))
+        return redirect(url_for('agenda')) # Redirigir a 'agenda' en lugar de 'contactos'
 
     return render_template('editar_contacto.html', contacto=contacto)
-
-
-
-
-
 
 @app.route('/agenda/borrar/<int:contacto_id>', methods=['POST'])
 @login_required
@@ -679,7 +673,6 @@ def borrar_contacto(contacto_id):
 def contacto_vcard(contacto_id):
     contacto = Contacto.query.get_or_404(contacto_id)
 
-    # Generar el contenido del archivo vCard
     vcard = f"""BEGIN:VCARD
 VERSION:3.0
 FN:{contacto.nombre} {contacto.apellido1} {contacto.apellido2}
@@ -692,13 +685,9 @@ CATEGORIES:{contacto.categoria}
 END:VCARD
 """
 
-    # Crear un objeto BytesIO con el contenido del archivo vCard
     output = BytesIO(vcard.encode('utf-8'))
 
-    # Devolver el archivo vCard como una descarga
     return send_file(output, download_name=f'{contacto.nombre}_{contacto_id}.vcf', mimetype='text/vcard', as_attachment=True)
-
-
 
 login_manager = LoginManager() # Crea una instancia de LoginManager para manejar la autenticación (Depende de app)
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
