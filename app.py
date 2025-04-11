@@ -297,9 +297,9 @@ def delete_post(post_id):
 
 
 
-@app.route('/crear_video')
-def crear_video():
-    return render_template('crear_video.html')
+@app.route('/create_vids')
+def create_vids():
+    return render_template('create_vids.html')
     
 
 @app.route('/videos', methods=['GET', 'POST'])
@@ -372,7 +372,7 @@ def actualizar_video(id):
         db.session.commit()
         return redirect(url_for('videos'))
 
-    return render_template('crear_video.html', video=video)
+    return render_template('create_vids.html', video=video)
 
 
 
