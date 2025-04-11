@@ -105,7 +105,7 @@
 <div class="profile-container">
     {% if current_avatar %}
     <div class="profile-avatar">
-        <img src="{{ url_for('static', filename=current_avatar) }}" alt="Avatar actual">
+        <img src="{{ url_for('serve_avatar', filename=current_avatar.split('/')[-1]) }}" alt="Avatar actual">
     </div>
     {% endif %}
 

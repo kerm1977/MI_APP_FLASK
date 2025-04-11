@@ -150,15 +150,15 @@
 </style>
 
 <div class="container is-fluid">
-  <div class="main-title">
-    <h1>{{ titulo }}</h1>
-  </div>
+    <div class="main-title">
+        <h1>{{ titulo }}</h1>
+    </div>
 </div>
 
 <div class="profile-container">
     {% if usuario.avatar %}
     <div class="profile-avatar">
-        <img src="{{ url_for('static', filename=usuario.avatar) }}" alt="Avatar" id="avatarImage" style="cursor: pointer;"> 
+        <img src="/{{ usuario.avatar }}" alt="Avatar" id="avatarImage" style="cursor: pointer;"> 
         <a href="{{ url_for('actualizar_avatar') }}" class="edit-icon"></a>
     </div>
     {% endif %}
@@ -168,13 +168,13 @@
     <p><strong>Segundo Apellido:</strong> {{ usuario.second_last_name }}</p>
     <p><strong>Teléfono:</strong> {{ usuario.phone_number }}</p>
     <p><strong>Email:</strong> {{ usuario.email }}</p>
-  </div>
+</div>
 
-  <div class="profile-actions">
+<div class="profile-actions">
     <a class="primary" href="{{ url_for('actualizar_usuario', user_id=usuario.id) }}"><span class="icon-pencil2"></span></a>
     <a class="info" href="{{ url_for('actualizar_avatar') }}"><span class="icon-image"></span></a>
     <a class="danger" href="{{ url_for('logout') }}"><span class="icon-switch"></span></a>
-  </div>
+</div>
 </div>
 
 <div id="avatarModal" class="modal">
@@ -183,8 +183,8 @@
 </div>
 
 <div class="other-actions">
-  <a href="{{ url_for('agenda') }}">Contactos</a>
-  <a href="{{ url_for('users') }}">Ver usuarios registrados</a>
+    <a href="{{ url_for('agenda') }}">Contactos</a>
+    <a href="{{ url_for('users') }}">Ver usuarios registrados</a>
 </div>
 
 {% endblock %}

@@ -551,6 +551,11 @@ def login(): # Define la función para el inicio de sesión
 def perfil(): # Define la función para el perfil del usuario
     return render_template('perfil.html', usuario=current_user) # Renderiza la plantilla perfil.html
 
+@app.route('/avatar/<filename>')
+def serve_avatar(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
 @app.route('/actualizar_avatar', methods=['GET', 'POST'])
 @login_required
 def actualizar_avatar():
