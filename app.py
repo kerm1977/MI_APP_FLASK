@@ -898,52 +898,42 @@ def reset_password(token):
 # ADMINISTRADOR DE ARCHIVOS 
 
 @app.route('/archivos')
-@login_required
 def archivos():
     archivos = os.listdir(UPLOAD_FOLDER)
     archivos_con_usuarios = []
     for archivo in archivos:
-        video = Video.query.filter_by(video_url=archivo).first()
-        if video:
-            usuario = User.query.get(video.user_id)
-            es_imagen = archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
-            archivos_con_usuarios.append({'nombre_archivo': archivo, 'usuario': usuario, 'es_imagen': es_imagen})
-        else:
-            es_imagen = archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
-            archivos_con_usuarios.append({'nombre_archivo': archivo, 'usuario': None, 'es_imagen': es_imagen})
-    print(f"UPLOAD_FOLDER: {UPLOAD_FOLDER}")  # Depuración
+        es_imagen = archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
+        archivos_con_usuarios.append({'nombre_archivo': archivo, 'usuario': None, 'es_imagen': es_imagen})
+
     return render_template('archivos.html', archivos=archivos_con_usuarios, upload_folder=UPLOAD_FOLDER)
 
-# En archivos.html
-
 @app.route('/borrar/<nombre_archivo>')
-@login_required
 def borrar(nombre_archivo):
     ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
     try:
         os.remove(ruta_archivo)
+        flash('Archivo borrado con éxito.', 'success')
     except FileNotFoundError:
-        pass  # Manejar si el archivo no existe
+        flash('El archivo no existe.', 'error')
     return redirect(url_for('archivos'))
 
 @app.route('/subir', methods=['POST'])
-@login_required
 def subir():
-    if 'archivo' not in request.files:
-        return redirect(request.url)
-    archivo = request.files['archivo']
+    if 'miArchivo' not in request.files:
+        flash('No se seleccionó ningún archivo.', 'error')
+        return redirect(url_for('archivos'))
+    archivo = request.files['miArchivo']
     if archivo.filename == '':
-        return redirect(request.url)
+        flash('No se seleccionó ningún archivo.', 'error')
+        return redirect(url_for('archivos'))
     if archivo and allowed_file(archivo.filename):
         nombre_archivo = secure_filename(archivo.filename)
         archivo.save(os.path.join(UPLOAD_FOLDER, nombre_archivo))
-    return redirect(url_for('archivos'))
-
-
-
-
-
-
+        flash('Archivo subido con éxito.', 'success')
+        return redirect(url_for('archivos'))
+    else:
+        flash('Tipo de archivo no permitido.', 'error')
+        return redirect(url_for('archivos'))
 
 
 
