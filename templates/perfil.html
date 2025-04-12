@@ -158,11 +158,17 @@
 <div class="profile-container">
     {% if usuario.avatar %}
     <div class="profile-avatar">
-        <img src="/{{ usuario.avatar }}" alt="Avatar" id="avatarImage" style="cursor: pointer;"> 
+        <img src="/uploads/{{ usuario.avatar.split('/')[-1] }}" alt="Avatar" id="avatarImage" style="cursor: pointer;"> 
         <a href="{{ url_for('actualizar_avatar') }}" class="edit-icon"></a>
     </div>
     {% endif %}
 
+    {% if current_avatar %}
+    <div class="profile-avatar">
+        <img src="{{ url_for('serve_avatar', filename=current_avatar.split('/')[-1]) }}" alt="Avatar actual">
+    </div>
+    {% endif %}
+    
     <p><strong>Nombre:</strong> {{ usuario.name }}</p>
     <p><strong>Primer Apellido:</strong> {{ usuario.first_last_name }}</p>
     <p><strong>Segundo Apellido:</strong> {{ usuario.second_last_name }}</p>
@@ -187,4 +193,4 @@
     <a href="{{ url_for('users') }}">Ver usuarios registrados</a>
 </div>
 
-{% endblock %}
+{% endblock %}s

@@ -29,7 +29,7 @@ import io
 
 # CONFIG
 app = Flask(__name__) # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db)
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
 app.secret_key = os.urandom(24) # Genera una clave secreta para la sesión (Depende de flask_login)
 UPLOAD_FOLDER = 'static/uploads/' # Define la carpeta para almacenar archivos cargados (Depende de las rutas de uploads)
@@ -41,6 +41,16 @@ login_manager = LoginManager() # Crea una instancia de LoginManager para manejar
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
+
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db)
+
+dbdir = "sqlite:///" + os.path.abspath(os.getcwd()) + "/db.db" #CONECTOR - RUTA ABSOLUTA
+app.config['SQLALCHEMY_DATABASE_URI'] = dbdir
+    host = "kenth1977.mysql.pythonanywhere-services.com",
+    user = "kenth1977",
+    password = "latribu1977",
+    database = "kenth1977g$db
+
 
 
 
@@ -762,4 +772,5 @@ if __name__ == '__main__': # Verifica si el script se ejecuta directamente
         # $ flask db stamp head
         # $ flask db migrate
         # $ flask db upgrade
+        # git clone https://github.com/kerm1977/MI_APP_FLASK.git
 # -----------------------
