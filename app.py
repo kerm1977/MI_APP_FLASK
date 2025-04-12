@@ -29,7 +29,7 @@ import io
 
 # CONFIG
 app = Flask(__name__) # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
 app.secret_key = os.urandom(24) # Genera una clave secreta para la sesión (Depende de flask_login)
 UPLOAD_FOLDER = 'static/uploads/' # Define la carpeta para almacenar archivos cargados (Depende de las rutas de uploads)
@@ -41,16 +41,6 @@ login_manager = LoginManager() # Crea una instancia de LoginManager para manejar
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
-
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db)
-
-dbdir = "sqlite:///" + os.path.abspath(os.getcwd()) + "/db.db" #CONECTOR - RUTA ABSOLUTA
-app.config['SQLALCHEMY_DATABASE_URI'] = dbdir
-host = "kenth1977.mysql.pythonanywhere-services.com",
-user = "kenth1977",
-password = "latribu1977",
-database = "kenth1977g$db"
-
 
 
 
@@ -90,9 +80,10 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    image = db.Column(db.String(200))
+    image = db.Column(db.String(255), nullable=True)
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', name='fk_post_user'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) #Relacion con el usuario, para saber quien lo creo.
+    user_email = db.Column(db.String(120), nullable=True) # Agrega este campo
 
 class Tarea(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -188,28 +179,28 @@ def post(post_id):
 
 
 @app.route('/new', methods=['GET', 'POST'])
-@login_required # add this to ensure user is logged in
+@login_required
 def new_post():
     titulo = "Crear Un Nuevo Post"
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-        image = request.files.get('image') # .get to prevent keyerror
+        image = request.files.get('image')
 
-        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
         if image and image.filename != '':
-            if len(image.read(512)) > app.config['MAX_CONTENT_LENGTH']: #read only the start of the file
+            if len(image.read(512)) > app.config['MAX_CONTENT_LENGTH']:
                 flash("El archivo es demasiado grande.", 'danger')
                 return render_template('new_post.html')
 
-            image.seek(0)  # reset the file pointer
+            image.seek(0)
 
             if allowed_file(image.filename):
                 filename = secure_filename(image.filename)
                 try:
                     image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow(), user_id=current_user.id) # assign user_id
+                    post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow(), user_id=current_user.id, user_email=current_user.email) # Almacena el correo
                     db.session.add(post)
                     db.session.commit()
                     flash('Publicación creada con éxito', 'success')
@@ -222,8 +213,8 @@ def new_post():
                 flash("Archivo no permitido", "danger")
                 return render_template('new_post.html')
 
-        else: # no image uploaded.
-            post = Post(title=title, content=content, image=None, date_posted=datetime.utcnow(), user_id=current_user.id) # assign user_id
+        else:
+            post = Post(title=title, content=content, image=None, date_posted=datetime.utcnow(), user_id=current_user.id, user_email=current_user.email) # Almacena el correo
             try:
                 db.session.add(post)
                 db.session.commit()
@@ -239,18 +230,18 @@ def new_post():
 
 
 @app.route('/edit/<int:post_id>', methods=['GET', 'POST'])
-@login_required  # Requiere que el usuario esté logueado
+@login_required
 def edit_post(post_id):
     titulo = "Editar el Post"
     post = Post.query.get_or_404(post_id)
-    if post.user_id != current_user.id: # check if the user is the post's author
+    if post.user_id != current_user.id:
         flash("No tienes permiso para editar este post.", "danger")
         return redirect(url_for('post', post_id=post.id))
 
     if request.method == 'POST':
         post.title = request.form['title']
         post.content = request.form['content']
-        image = request.files.get('image') # get to prevent key error
+        image = request.files.get('image')
 
         if image and image.filename != '':
             if allowed_file(image.filename):
@@ -268,6 +259,7 @@ def edit_post(post_id):
                     flash(f"Error al guardar el archivo: {e}", 'danger')
                     return render_template('edit_post.html', post=post, error=str(e))
 
+        post.user_email = current_user.email # Actualiza el email si el usuario se edita.
         db.session.commit()
         return redirect(url_for('post', post_id=post.id))
     return render_template('edit_post.html', post=post, titulo=titulo)
@@ -337,6 +329,8 @@ def videos():
     videos = Video.query.all()
     return render_template('videos.html', videos=videos, titulo=titulo)
 
+
+
 @app.route('/videos/edit/<int:video_id>', methods=['GET', 'POST'])
 def edit_video(video_id):
     video = Video.query.get_or_404(video_id)
@@ -359,11 +353,17 @@ def edit_video(video_id):
 @app.route('/borrar_video/<int:id>', methods=['POST'])
 def borrar_video(id):
     video = Video.query.get_or_404(id)
-    if video.image_url: # Usa 'image_url' aquí
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], video.image_url)) # Usa 'image_url' aquí
+    try:
+        if video.image_url:
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], video.image_url))
+    except FileNotFoundError:
+        flash(f"La imagen {video.image_url} no fue encontrada y no pudo ser eliminada.", 'warning')
+    except Exception as e:
+        flash(f"Ocurrió un error al eliminar la imagen: {str(e)}", 'danger')
     db.session.delete(video)
     db.session.commit()
-    return redirect(url_for('videos'))
+    flash('Video eliminado correctamente.', 'success')
+    return redirect(url_for('videos'))  # O la ruta que corresponda
 
 @app.route('/actualizar_video/<int:id>', methods=['GET', 'POST'])
 def actualizar_video(id):
