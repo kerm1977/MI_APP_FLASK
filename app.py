@@ -46,10 +46,10 @@ migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la b
 
 dbdir = "sqlite:///" + os.path.abspath(os.getcwd()) + "/db.db" #CONECTOR - RUTA ABSOLUTA
 app.config['SQLALCHEMY_DATABASE_URI'] = dbdir
-    host = "kenth1977.mysql.pythonanywhere-services.com",
-    user = "kenth1977",
-    password = "latribu1977",
-    database = "kenth1977g$db
+host = "kenth1977.mysql.pythonanywhere-services.com",
+user = "kenth1977",
+password = "latribu1977",
+database = "kenth1977g$db"
 
 
 
