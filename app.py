@@ -69,7 +69,7 @@ mail = Mail(app)
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS # No corchetes extras
@@ -95,6 +95,7 @@ class User(UserMixin, db.Model):
     posts = db.relationship('Post', backref='author', lazy=True)
     reset_token = db.Column(db.String(100), nullable=True)  # Añadido
     reset_token_expiration = db.Column(db.DateTime, nullable=True)  # Añadido
+    nombre_archivo = db.Column(db.String(255))
 
     # RECUPERADOR DE CONTRASEÑAS
     def set_password(self, password):
@@ -146,6 +147,7 @@ class Video(db.Model):
     video_url = db.Column(db.String(200))
     image_url = db.Column(db.String(200))  # Nuevo campo para la URL de la imagen
 
+    
 class Contacto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
@@ -888,6 +890,54 @@ def reset_password(token):
         flash('Tu contraseña ha sido restablecida.', 'success')
         return redirect(url_for('login'))
     return render_template('reset_password.html', token=token)
+
+
+
+
+
+# ADMINISTRADOR DE ARCHIVOS 
+
+@app.route('/archivos')
+@login_required
+def archivos():
+    archivos = os.listdir(UPLOAD_FOLDER)
+    archivos_con_usuarios = []
+    for archivo in archivos:
+        video = Video.query.filter_by(video_url=archivo).first()
+        if video:
+            usuario = User.query.get(video.user_id)
+            es_imagen = archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
+            archivos_con_usuarios.append({'nombre_archivo': archivo, 'usuario': usuario, 'es_imagen': es_imagen})
+        else:
+            es_imagen = archivo.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
+            archivos_con_usuarios.append({'nombre_archivo': archivo, 'usuario': None, 'es_imagen': es_imagen})
+    print(f"UPLOAD_FOLDER: {UPLOAD_FOLDER}")  # Depuración
+    return render_template('archivos.html', archivos=archivos_con_usuarios, upload_folder=UPLOAD_FOLDER)
+
+# En archivos.html
+
+@app.route('/borrar/<nombre_archivo>')
+@login_required
+def borrar(nombre_archivo):
+    ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
+    try:
+        os.remove(ruta_archivo)
+    except FileNotFoundError:
+        pass  # Manejar si el archivo no existe
+    return redirect(url_for('archivos'))
+
+@app.route('/subir', methods=['POST'])
+@login_required
+def subir():
+    if 'archivo' not in request.files:
+        return redirect(request.url)
+    archivo = request.files['archivo']
+    if archivo.filename == '':
+        return redirect(request.url)
+    if archivo and allowed_file(archivo.filename):
+        nombre_archivo = secure_filename(archivo.filename)
+        archivo.save(os.path.join(UPLOAD_FOLDER, nombre_archivo))
+    return redirect(url_for('archivos'))
 
 
 
