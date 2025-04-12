@@ -155,7 +155,8 @@ class Contacto(db.Model):
     telefono = db.Column(db.String(20))
     celular = db.Column(db.String(20))
     empresa = db.Column(db.String(100))
-    categoria = db.Column(db.String(50))
+    categoria = db.Column(db.String(100))
+    avatar = db.Column(db.String(255))  # Nueva columna para la ruta del avatar
 
 
 
@@ -582,10 +583,10 @@ def actualizar_usuario(user_id):
     return render_template('actualizar_usuario.html', usuario=usuario)
 
 
-@app.route('/editar_usuario/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/editar_usuario/<int:usuario_id>', methods=['GET', 'POST'])
 @login_required
-def editar_usuario(user_id):
-    usuario = User.query.get_or_404(user_id)
+def editar_usuario(usuario_id):
+    usuario = User.query.get_or_404(usuario_id) # Cambio user_id a usuario_id
     if request.method == 'POST':
         nombre = request.form['nombre']
         apellido1 = request.form['apellido1']
@@ -600,7 +601,7 @@ def editar_usuario(user_id):
             telefono == usuario.phone_number and
             email == usuario.email):
             flash("No se realizaron cambios en la información del usuario.", "info")
-            return redirect(url_for('editar_usuario', user_id=user_id))
+            return redirect(url_for('editar_usuario', usuario_id=usuario_id)) # Cambio user_id a usuario_id
 
         usuario.name = nombre
         usuario.first_last_name = apellido1
@@ -611,12 +612,13 @@ def editar_usuario(user_id):
         flash("Usuario actualizado correctamente.", "success")
         return redirect(url_for('users'))
     return render_template('editar_usuario.html', usuario=usuario)
-    
 
-@app.route('/eliminar_usuario/<int:user_id>', methods=['POST'])
+
+
+@app.route('/eliminar_usuario/<int:usuario_id>', methods=['POST'])
 @login_required
-def eliminar_usuario(user_id):
-    usuario = User.query.get_or_404(user_id)
+def eliminar_usuario(usuario_id):
+    usuario = User.query.get_or_404(usuario_id) # Cambio user_id a usuario_id
     db.session.delete(usuario)
     db.session.commit()
     flash("Usuario eliminado correctamente.", "success")
@@ -724,29 +726,42 @@ def server_not_found(e): # Define la función para manejar errores 500
 @login_required
 def agenda():
     if request.method == 'POST':
-        nombre = request.form['nombre']
-        apellido1 = request.form['apellido1']
-        apellido2 = request.form['apellido2']
-        email = request.form['email']
-        telefono = request.form['telefono']
-        celular = request.form['celular']
-        empresa = request.form['empresa']
-        categoria = request.form['categoria']
+        try:
+            nombre = request.form['nombre']
+            apellido1 = request.form['apellido1']
+            apellido2 = request.form['apellido2']
+            email = request.form['email']
+            telefono = request.form['telefono']
+            celular = request.form['celular']
+            empresa = request.form['empresa']
+            categoria = request.form['categoria']
 
-        nuevo_contacto = Contacto(nombre=nombre, apellido1=apellido1, apellido2=apellido2, email=email, telefono=telefono, celular=celular, empresa=empresa, categoria=categoria)
-        db.session.add(nuevo_contacto)
-        db.session.commit()
-        flash('Contacto agregado correctamente.', 'success')
-        return redirect(url_for('agenda'))
+            avatar_path = 'img/default.png'
+            if 'avatar' in request.files:
+                file = request.files['avatar']
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    avatar_path = 'uploads/' + filename
+
+            nuevo_contacto = Contacto(nombre=nombre, apellido1=apellido1, apellido2=apellido2, email=email, telefono=telefono, celular=celular, empresa=empresa, categoria=categoria, avatar=avatar_path)
+            db.session.add(nuevo_contacto)
+            db.session.commit()
+            flash('Contacto agregado correctamente.', 'success')
+            return redirect(url_for('agenda'))
+        except Exception as e:
+            flash(f'Error al agregar contacto: {e}', 'danger')
+            return redirect(url_for('agenda'))
 
     contactos = Contacto.query.all()
-    cantidad_contactos = Contacto.query.count() # Cuenta los registros
+    cantidad_contactos = Contacto.query.count()
     return render_template('agenda.html', contactos=contactos, cantidad_contactos=cantidad_contactos)
 
+
 @app.route('/editar_contacto/<int:contacto_id>', methods=['GET', 'POST'])
-@login_required
 def editar_contacto(contacto_id):
     contacto = Contacto.query.get_or_404(contacto_id)
+    original_avatar = contacto.avatar
 
     if request.method == 'POST':
         nombre = request.form['nombre']
@@ -758,6 +773,15 @@ def editar_contacto(contacto_id):
         empresa = request.form['empresa']
         categoria = request.form['categoria']
 
+        new_avatar = None
+
+        if 'avatar' in request.files:
+            avatar = request.files['avatar']
+            if avatar.filename != '':
+                filename = secure_filename(avatar.filename)
+                avatar.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                new_avatar = 'uploads/' + filename #Guardamos la ruta relativa a uploads
+
         if (nombre == contacto.nombre and
             apellido1 == contacto.apellido1 and
             apellido2 == contacto.apellido2 and
@@ -765,8 +789,9 @@ def editar_contacto(contacto_id):
             telefono == contacto.telefono and
             celular == contacto.celular and
             empresa == contacto.empresa and
-            categoria == contacto.categoria):
-            flash('No se realizaron cambios.', 'info')  # Mensaje si no hay cambios
+            categoria == contacto.categoria and
+            new_avatar is None):
+            flash("No se realizaron cambios en la información del contacto.", "info")
             return redirect(url_for('editar_contacto', contacto_id=contacto_id))
 
         contacto.nombre = nombre
@@ -778,19 +803,25 @@ def editar_contacto(contacto_id):
         contacto.empresa = empresa
         contacto.categoria = categoria
 
+        if new_avatar:
+            contacto.avatar = new_avatar
+
         db.session.commit()
-        flash('Contacto actualizado correctamente.', 'success')
-        return redirect(url_for('agenda')) # Redirigir a 'agenda' en lugar de 'contactos'
+        flash("Contacto actualizado correctamente.", "success")
+        return redirect(url_for('agenda'))
 
     return render_template('editar_contacto.html', contacto=contacto)
 
 @app.route('/agenda/borrar/<int:contacto_id>', methods=['POST'])
-@login_required     
+@login_required
 def borrar_contacto(contacto_id):
     contacto = Contacto.query.get_or_404(contacto_id)
     db.session.delete(contacto)
     db.session.commit()
     return redirect(url_for('agenda'))
+
+
+
 
 @app.route('/agenda/vcard/<int:contacto_id>')
 @login_required

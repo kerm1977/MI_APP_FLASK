@@ -16,7 +16,7 @@
 
     <div class="card mt-4">
         <div class="card-body">
-            <form method="POST" action="{{ url_for('editar_contacto', contacto_id=contacto.id) }}">
+            <form method="POST" action="{{ url_for('editar_contacto', contacto_id=contacto.id) }}" enctype="multipart/form-data">
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="nombre" class="form-label">Nombre:</label>
@@ -65,11 +65,14 @@
                         </select>
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label for="avatar" class="form-label">Avatar:</label>
+                    <input type="file" name="avatar" id="avatar" class="form-control">
+                </div> 
                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             </form>
         </div>
     </div>
 </div>
-
 
 {% endblock %}
