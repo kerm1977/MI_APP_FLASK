@@ -3,12 +3,10 @@
 
 <div class="flex_container">
     <div class="container is-fluid">
-    <div class="main-title has-text-centered">
-    <h1 class="title ">{{titulo}}</h1>
-   </div>
-</div>
-
-
+        <div class="main-title has-text-centered">
+            <h1 class="title ">{{titulo}}</h1>
+        </div>
+    </div>
 
     <div class="container mt-4">
         <h1 class="mb-4">Actualizar Usuario</h1>
@@ -53,9 +51,7 @@
                 <div class="control me-2">
                     <button class="btn btn-primary" type="submit">Actualizar Usuario</button>
                 </div>
-                <div class="control">
-                    <button class="btn btn-danger" type="submit" name="eliminar_usuario" value="1" onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario?')">Eliminar Usuario</button>
-                </div>
+                
             </div>
         </form>
 
@@ -72,4 +68,4 @@
     </script>
 </body>
 
-{% endblock %}
+{%endblock%}

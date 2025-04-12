@@ -442,47 +442,6 @@ def actualizar_video(id):
 
 
 
- # from flask import send_from_directory 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-@app.route('/users', methods=['GET'])
-@login_required
-def users():
-    titulo = "Lista de Usuarios"
-    search_term = request.args.get('search', '').lower()  # Convertir a minúsculas
-
-    if search_term:
-        # Búsqueda por nombre, apellido, teléfono, email o cualquier coincidencia parcial
-        users = User.query.filter(
-            db.or_(
-                User.name.ilike('%' + search_term + '%'),
-                User.first_last_name.ilike('%' + search_term + '%'),
-                User.second_last_name.ilike('%' + search_term + '%'),
-                User.phone_number.ilike('%' + search_term + '%'),
-                User.email.ilike('%' + search_term + '%')
-            )
-        ).all()
-
-        user_count = len(users)
-        users_by_letter = {}
-        for user in users:
-            first_letter = user.name[0].upper()
-            if first_letter not in users_by_letter:
-                users_by_letter[first_letter] = []
-            users_by_letter[first_letter].append(user)
-    else:
-        # Si no hay término de búsqueda, muestra todos los usuarios
-        users = User.query.all()
-        user_count = len(users)
-        users_by_letter = {}
-        for user in users:
-            first_letter = user.name[0].upper()
-            if first_letter not in users_by_letter:
-                users_by_letter[first_letter] = []
-            users_by_letter[first_letter].append(user)
-
-    return render_template('users.html', titulo=titulo, users_by_letter=users_by_letter, user_count=user_count, search_term=search_term)
 
 
 
@@ -536,6 +495,53 @@ def registro(): # Define la función para el registro de usuarios
 
 
 
+
+
+ # from flask import send_from_directory 
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/users', methods=['GET'])
+@login_required
+def users():
+    titulo = "Lista de Usuarios"
+    search_term = request.args.get('search', '').lower()  # Convertir a minúsculas
+
+    if search_term:
+        # Búsqueda por nombre, apellido, teléfono, email o cualquier coincidencia parcial
+        users = User.query.filter(
+            db.or_(
+                User.name.ilike('%' + search_term + '%'),
+                User.first_last_name.ilike('%' + search_term + '%'),
+                User.second_last_name.ilike('%' + search_term + '%'),
+                User.phone_number.ilike('%' + search_term + '%'),
+                User.email.ilike('%' + search_term + '%')
+            )
+        ).all()
+
+        user_count = len(users)
+        users_by_letter = {}
+        for user in users:
+            first_letter = user.name[0].upper()
+            if first_letter not in users_by_letter:
+                users_by_letter[first_letter] = []
+            users_by_letter[first_letter].append(user)
+    else:
+        # Si no hay término de búsqueda, muestra todos los usuarios
+        users = User.query.all()
+        user_count = len(users)
+        users_by_letter = {}
+        for user in users:
+            first_letter = user.name[0].upper()
+            if first_letter not in users_by_letter:
+                users_by_letter[first_letter] = []
+            users_by_letter[first_letter].append(user)
+
+    return render_template('users.html', titulo=titulo, users_by_letter=users_by_letter, user_count=user_count, search_term=search_term)
+
+
+
+
 @app.route('/actualizar_usuario/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def actualizar_usuario(user_id):
@@ -576,6 +582,45 @@ def actualizar_usuario(user_id):
     return render_template('actualizar_usuario.html', usuario=usuario)
 
 
+@app.route('/editar_usuario/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def editar_usuario(user_id):
+    usuario = User.query.get_or_404(user_id)
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        apellido1 = request.form['apellido1']
+        apellido2 = request.form['apellido2']
+        telefono = request.form['telefono']
+        email = request.form['email']
+
+        # Verifica si los datos son los mismos
+        if (nombre == usuario.name and
+            apellido1 == usuario.first_last_name and
+            apellido2 == usuario.second_last_name and
+            telefono == usuario.phone_number and
+            email == usuario.email):
+            flash("No se realizaron cambios en la información del usuario.", "info")
+            return redirect(url_for('editar_usuario', user_id=user_id))
+
+        usuario.name = nombre
+        usuario.first_last_name = apellido1
+        usuario.second_last_name = apellido2
+        usuario.phone_number = telefono
+        usuario.email = email
+        db.session.commit()
+        flash("Usuario actualizado correctamente.", "success")
+        return redirect(url_for('users'))
+    return render_template('editar_usuario.html', usuario=usuario)
+    
+
+@app.route('/eliminar_usuario/<int:user_id>', methods=['POST'])
+@login_required
+def eliminar_usuario(user_id):
+    usuario = User.query.get_or_404(user_id)
+    db.session.delete(usuario)
+    db.session.commit()
+    flash("Usuario eliminado correctamente.", "success")
+    return redirect(url_for('users'))
 
 
 
@@ -596,7 +641,7 @@ def login(): # Define la función para el inicio de sesión
             login_user(usuario) # Inicia sesión con el usuario
             return redirect(url_for('index')) # Redirige a la página de perfil
         else: # Si el usuario no existe o la contraseña es incorrecta
-            return "Email o contraseña incorrectos" # Muestra un mensaje de error
+            flash("Email o contraseña incorrectos") # Muestra un mensaje de error
     return render_template('login.html') # Renderiza la plantilla login.html
 
 

@@ -116,25 +116,35 @@
     </div>
 
     {% for letter, users in users_by_letter.items() %}
-    <div class="letter-group" style="position: relative;"> <h3 class="letter-title">
+    <div class="letter-group" style="position: relative;">
+      <h3 class="letter-title">
         {{ letter }}
       </h3>
       {% if users|length > 0 and users[0].avatar %}
-      <div class="letter-avatar" style="position: absolute; top: 10px; right: 10px;"> <img src="{{ url_for('uploaded_file', filename=users[0].avatar.split('/')[-1]) }}" alt="Avatar">
+      <div class="letter-avatar" style="position: absolute; top: 10px; right: 10px;">
+        <img src="{{ url_for('uploaded_file', filename=users[0].avatar.split('/')[-1]) }}" alt="Avatar">
       </div>
       {% endif %}
       <ul class="user-list">
         {% for user in users %}
         <li class="user-item">
-          <div style="display: flex; align-items: center;">
-            <ul>
-              <li><strong>Nombre:</strong> {{ user.name|title }}</li>
-              <li><strong>Primer Apellido:</strong> {{ user.first_last_name|title }}</li>
-              <li><strong>Segundo Apellido:</strong> {{ user.second_last_name|title }}</li>
-              <li><strong>Teléfono:</strong> {{ user.phone_number }}</li>
-              <li><strong>Email:</strong> {{ user.email|lower }}</li>
-              <li><strong>Número de registros:</strong> {{ user.registration_count }}</li>
-            </ul>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <ul>
+                <li><strong>Nombre:</strong> {{ user.name|title }}</li>
+                <li><strong>Primer Apellido:</strong> {{ user.first_last_name|title }}</li>
+                <li><strong>Segundo Apellido:</strong> {{ user.second_last_name|title }}</li>
+                <li><strong>Teléfono:</strong> {{ user.phone_number }}</li>
+                <li><strong>Email:</strong> {{ user.email|lower }}</li>
+                <li><strong>Número de registros:</strong> {{ user.registration_count }}</li>
+              </ul>
+            </div>
+            <div>
+              <a href="{{ url_for('editar_usuario', user_id=user.id) }}" class="button is-info">Editar</a>
+              <form method="POST" action="{{ url_for('eliminar_usuario', user_id=user.id) }}" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');">
+                <button type="submit" class="button is-danger">Eliminar</button>
+              </form>
+            </div>
           </div>
         </li>
         {% endfor %}
