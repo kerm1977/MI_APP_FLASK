@@ -3,27 +3,29 @@
 
 
     <style>
-        .card {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .card-body {
-            display: flex;
-            flex-direction: column;
-        }
-        .card-actions {
-            margin-top: auto;
-            display: flex; /* Añadido para que el botón ocupe todo el ancho */
-        }
-        .card-actions a {
-            flex-grow: 1; /* Añadido para que el botón ocupe todo el ancho */
-            height: 100%; /* Añadido para que el botón ocupe toda la altura */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
+    .card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: none; /* Elimina la sombra */
+        border: 1px solid #dee2e6; /* Opcional: agrega un borde para definir los cards */
+    }
+    .card-body {
+        display: flex;
+        flex-direction: column;
+    }
+    .card-actions {
+        margin-top: auto;
+        display: flex;
+    }
+    .card-actions a {
+        flex-grow: 1;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
 
 <div class="container mt-4">
     <h1>Gestión de Archivos</h1>
@@ -49,6 +51,7 @@
                             {% if item.usuario %}
                                 <img src="{{ item.usuario.avatar }}" alt="Avatar" class="avatar">
                             {% endif %}
+                            <hr>
                             <div class="card-actions">
                                 <a href="{{ url_for('borrar', nombre_archivo=item.nombre_archivo) }}" class="btn btn-danger">Borrar</a>
                             </div>
