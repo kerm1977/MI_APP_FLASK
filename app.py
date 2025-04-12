@@ -6,7 +6,7 @@ from flask_login import UserMixin, login_user, LoginManager, login_required, log
 from flask_sqlalchemy import SQLAlchemy # Importa SQLAlchemy para interactuar con la base de datos (Depende de app)
 from werkzeug.utils import secure_filename # Importa secure_filename para manejar archivos cargados de forma segura (Depende de las rutas que manejan uploads)
 import os # Importa el módulo os para interactuar con el sistema operativo (Depende de app.secret_key y rutas de uploads)
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 from flask_mail import Mail, Message
 from sqlalchemy import or_
@@ -26,6 +26,13 @@ from flask import send_file
 from io import BytesIO, StringIO # Add this line to import BytesIO and StringIO.
 import io
 
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+# BORRAR TAMBIEN reset_password, RESTABLECER CONTRASEÑA
+# recuperacion_contraseña forgot_password 
+import smtplib
+from email.mime.text import MIMEText
+
 
 # CONFIG
 app = Flask(__name__) # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
@@ -44,6 +51,22 @@ migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la b
 
 
 
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Cambia esto a tu servidor SMTP
+app.config['MAIL_PORT'] = 465  # Cambia esto al puerto de tu servidor SMTP
+app.config['MAIL_USE_SSL'] = True  # O False si usas TLS
+app.config['MAIL_USERNAME'] = 'lthikingcr@gmail.com'  # Cambia esto a tu correo
+app.config['MAIL_PASSWORD'] = 'latribuhiking'  # Cambia esto a tu contraseña
+app.config['MAIL_DEFAULT_SENDER'] = 'lthikingcr@gmail.com'  # Cambia esto a tu correo
+
+mail = Mail(app)
+
+
+
+
+
+
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -59,22 +82,44 @@ def allowed_file(filename):
 
 
 
-class User(UserMixin, db.Model): # Define el modelo de usuario (Depende de db)
-    id = db.Column(db.Integer, primary_key=True) # Define el ID del usuario (Depende de db)
-    name = db.Column(db.String(100), nullable=False) # Define el nombre del usuario (Depende de db)
-    first_last_name = db.Column(db.String(100), nullable=False) # Define el primer apellido del usuario (Depende de db)
-    second_last_name = db.Column(db.String(100), nullable=False) # Define el segundo apellido del usuario (Depende de db)
-    phone_number = db.Column(db.String(20), nullable=False) # Define el número de teléfono del usuario (Depende de db)
-    email = db.Column(db.String(100), unique=True, nullable=False) # Define el correo electrónico del usuario (Depende de db)
-    password_hash = db.Column(db.String(128), nullable=False) # Define el hash de la contraseña del usuario (Depende de db)
-    avatar = db.Column(db.String(200)) # Define la ruta del avatar del usuario (Depende de db)
-    registration_count = db.Column(db.Integer, default=0) # Define el contador de registros del usuario (Depende de db)
-    posts = db.relationship('Post', backref='author', lazy=True) # Add this line
-    def set_password(self, password): # Define un método para establecer la contraseña del usuario (Depende de generate_password_hash)
-        self.password_hash = generate_password_hash(password) # Genera el hash de la contraseña
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    first_last_name = db.Column(db.String(100), nullable=False)
+    second_last_name = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    avatar = db.Column(db.String(200))
+    registration_count = db.Column(db.Integer, default=0)
+    posts = db.relationship('Post', backref='author', lazy=True)
+    reset_token = db.Column(db.String(100), nullable=True)  # Añadido
+    reset_token_expiration = db.Column(db.DateTime, nullable=True)  # Añadido
 
-    def check_password(self, password): # Define un método para verificar la contraseña del usuario (Depende de check_password_hash)
-        return check_password_hash(self.password_hash, password) # Verifica el hash de la contraseña
+    # RECUPERADOR DE CONTRASEÑAS
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+    def generate_reset_token(self):  # Añadido
+        self.reset_token = secrets.token_urlsafe(16)
+        self.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
+        db.session.commit()
+        return self.reset_token
+
+    def reset_token_is_valid(self):  # Añadido
+        return self.reset_token_expiration and self.reset_token_expiration > datetime.utcnow()
+
+    def reset_password(self, password):  # Añadido
+        self.set_password(password)
+        self.reset_token = None
+        self.reset_token_expiration = None
+        db.session.commit()
+    # RECUPERADOR DE CONTRASEÑAS    
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -111,6 +156,13 @@ class Contacto(db.Model):
     celular = db.Column(db.String(20))
     empresa = db.Column(db.String(100))
     categoria = db.Column(db.String(50))
+
+
+
+
+
+
+
 
 
 @app.route("/")
@@ -725,6 +777,41 @@ def load_user(user_id): # Define la función para cargar el usuario
     return User.query.get(int(user_id)) # Obtiene el usuario de la base de datos
 
 
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        user = User.query.filter_by(email=email).first()
+        if user:
+            token = user.generate_reset_token()
+            msg = Message('Restablecer contraseña', recipients=[user.email])
+            msg.body = f'Sigue este enlace para restablecer tu contraseña: {url_for("reset_password", token=token, _external=True)}'
+            mail.send(msg)
+            flash('Se ha enviado un enlace para restablecer tu contraseña a tu correo electrónico.', 'info')
+            return redirect(url_for('login'))
+        else:
+            flash('No se encontró ningún usuario con ese correo electrónico.', 'danger')
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    user = User.query.filter_by(reset_token=token).first()
+    if not user or not user.reset_token_is_valid():
+        flash('Token inválido o expirado.', 'danger')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        if password != confirm_password:
+            flash('Las contraseñas no coinciden.', 'danger')
+            return render_template('reset_password.html', token=token)
+        user.reset_password(password)
+        flash('Tu contraseña ha sido restablecida.', 'success')
+        return redirect(url_for('login'))
+    return render_template('reset_password.html', token=token)
 
 
 
