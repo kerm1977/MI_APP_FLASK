@@ -17,7 +17,6 @@ import requests
 import secrets #videos
 import math
 import secrets
-import pymysql
 from authlib.integrations.flask_client import OAuth
 from flask import send_from_directory #Permite ver la imagen en el users
 # from recuperacion_contraseña import crear_modulo_recuperacion_contraseña # Importacion del modulo.
@@ -35,36 +34,12 @@ import smtplib
 from email.mime.text import MIMEText
 
 
-# Función para configurar las rutas en PythonAnywhere
-def configure_app_for_pythonanywhere(app):
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    static_path = os.path.join(base_dir, 'static')
-    upload_path = os.path.join(static_path, 'uploads')
-    app.config['UPLOAD_FOLDER'] = upload_path
-    app.static_folder = static_path
-    if not os.path.exists(upload_path):
-        os.makedirs(upload_path)
-    return app
-
-
 # CONFIG BASE DE DATOS
 app = Flask(__name__)  # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
 
-
-
-
-# CONFIGURACIÓN PARA LA BASE DE DATOS EN PYTHONANYWHERE MYSQL
-username = 'kenth1977'  # Reemplaza con tu nombre de usuario de PythonAnywhere
-database_name = 'kenth1977$db'  # Reemplaza con el nombre de tu base de datos
-database_host = 'kenth1977.mysql.pythonanywhere-services.com' # Dirección del host
-password = 'root' # tu contraseña real de MySQL en PythonAnywhere
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{username}:{password}@{database_host}/{database_name}'
-# ¡Reemplaza 'tu_contraseña_mysql' con tu contraseña real de MySQL en PythonAnywhere!
-
-
-
-
-# CONFIG
+# CONFIGURACIÓN PARA LA BASE DE DATOS MySQL en PythonAnywhere
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://kenth1977:CR129x7848n@kenth1977.mysql.pythonanywhere-services.com/kenth1977$db'
+#CONFIGURACIÓN PARA LA BASE DE DATOS LOCAL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db) lOCALMENTE
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
@@ -78,37 +53,17 @@ login_manager = LoginManager() # Crea una instancia de LoginManager para manejar
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
+app.app_context().push()
 
-
-
-# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
-# RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'  # Cambia esto a tu servidor SMTP
-app.config['MAIL_PORT'] = 465  # Cambia esto al puerto de tu servidor SMTP
-app.config['MAIL_USE_SSL'] = True  # O False si usas TLS
-app.config['MAIL_USERNAME'] = 'lthikingcr@gmail.com'  # Cambia esto a tu correo
-app.config['MAIL_PASSWORD'] = 'latribuhiking'  # Cambia esto a tu contraseña
-app.config['MAIL_DEFAULT_SENDER'] = 'lthikingcr@gmail.com'  # Cambia esto a tu correo
-
-mail = Mail(app)
-
-
-
-
-
-
+UPLOAD_FOLDER = './uploads'  # Define your upload folder path
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov'}
+
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'} # Added missing extensions
+
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS # No corchetes extras
-
-
-# EN CASO DE SEPARAR EL CÓDIGO BORRAR LOS IMPORTS YA LOS ARCHIVOS ESTÁN CREADOS 
-# from imports import *
-# from config import *
-
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 
@@ -995,6 +950,9 @@ def server_not_found(e):
 
 
 if __name__ == '__main__': # Verifica si el script se ejecuta directamente
+    db.create_all()
+    # db.upgrade_all()
+    # db.drop_all() #Solo se ejecuta para migrar nuevos campos a la db pero borra el contenido
     app.run(debug=True, port=3000) # Ejecuta la aplicación Flask
 
 
@@ -1011,4 +969,5 @@ if __name__ == '__main__': # Verifica si el script se ejecuta directamente
         # $ flask db migrate
         # $ flask db upgrade
         # git clone https://github.com/kerm1977/MI_APP_FLASK.git
+        # mysql> DROP DATABASE kenth1977$db; PYTHONANYWHATE
 # -----------------------
