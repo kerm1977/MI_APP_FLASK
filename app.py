@@ -17,6 +17,7 @@ import requests
 import secrets #videos
 import math
 import secrets
+import pymysql
 from authlib.integrations.flask_client import OAuth
 from flask import send_from_directory #Permite ver la imagen en el users
 # from recuperacion_contraseña import crear_modulo_recuperacion_contraseña # Importacion del modulo.
@@ -34,9 +35,38 @@ import smtplib
 from email.mime.text import MIMEText
 
 
+# Función para configurar las rutas en PythonAnywhere
+def configure_app_for_pythonanywhere(app):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    static_path = os.path.join(base_dir, 'static')
+    upload_path = os.path.join(static_path, 'uploads')
+    app.config['UPLOAD_FOLDER'] = upload_path
+    app.static_folder = static_path
+    if not os.path.exists(upload_path):
+        os.makedirs(upload_path)
+    return app
+
+
+# CONFIG BASE DE DATOS
+app = Flask(__name__)  # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
+
+
+
+
+# CONFIGURACIÓN PARA LA BASE DE DATOS EN PYTHONANYWHERE MYSQL
+username = 'kenth1977'  # Reemplaza con tu nombre de usuario de PythonAnywhere
+database_name = 'kenth1977$db'  # Reemplaza con el nombre de tu base de datos
+database_host = 'kenth1977.mysql.pythonanywhere-services.com' # Dirección del host
+password = 'root' # tu contraseña real de MySQL en PythonAnywhere
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{username}:{password}@{database_host}/{database_name}'
+# ¡Reemplaza 'tu_contraseña_mysql' con tu contraseña real de MySQL en PythonAnywhere!
+
+
+
+
 # CONFIG
-app = Flask(__name__) # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db) lOCALMENTE
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
 app.secret_key = os.urandom(24) # Genera una clave secreta para la sesión (Depende de flask_login)
 UPLOAD_FOLDER = 'static/uploads/' # Define la carpeta para almacenar archivos cargados (Depende de las rutas de uploads)
@@ -504,6 +534,8 @@ def registro(): # Define la función para el registro de usuarios
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
 @app.route('/users', methods=['GET'])
 @login_required
 def users():
@@ -898,6 +930,7 @@ def reset_password(token):
 # ADMINISTRADOR DE ARCHIVOS 
 
 @app.route('/archivos')
+@login_required
 def archivos():
     archivos = os.listdir(UPLOAD_FOLDER)
     archivos_con_usuarios = []
@@ -908,6 +941,7 @@ def archivos():
     return render_template('archivos.html', archivos=archivos_con_usuarios, upload_folder=UPLOAD_FOLDER)
 
 @app.route('/borrar/<nombre_archivo>')
+@login_required
 def borrar(nombre_archivo):
     ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
     try:
@@ -918,6 +952,7 @@ def borrar(nombre_archivo):
     return redirect(url_for('archivos'))
 
 @app.route('/subir', methods=['POST'])
+@login_required
 def subir():
     if 'miArchivo' not in request.files:
         flash('No se seleccionó ningún archivo.', 'error')
