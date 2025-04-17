@@ -8,7 +8,6 @@ from werkzeug.utils import secure_filename # Importa secure_filename para maneja
 import os # Importa el módulo os para interactuar con el sistema operativo (Depende de app.secret_key y rutas de uploads)
 from datetime import datetime, timedelta
 import sqlite3
-from flask_mail import Mail, Message
 from sqlalchemy import or_
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, DateField, TimeField, FloatField, IntegerField, BooleanField, FileField, SubmitField
@@ -17,7 +16,6 @@ import requests
 import secrets #videos
 import math
 import secrets
-from authlib.integrations.flask_client import OAuth
 from flask import send_from_directory #Permite ver la imagen en el users
 # from recuperacion_contraseña import crear_modulo_recuperacion_contraseña # Importacion del modulo.
 from urllib.parse import urlparse
@@ -34,13 +32,16 @@ import smtplib
 from email.mime.text import MIMEText
 
 
+
 # CONFIG BASE DE DATOS
 app = Flask(__name__)  # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
+
 
 # CONFIGURACIÓN PARA LA BASE DE DATOS MySQL en PythonAnywhere
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://kenth1977:CR129x7848n@kenth1977.mysql.pythonanywhere-services.com/kenth1977$db'
 #CONFIGURACIÓN PARA LA BASE DE DATOS LOCAL
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db) lOCALMENTE
+
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
 app.secret_key = os.urandom(24) # Genera una clave secreta para la sesión (Depende de flask_login)
@@ -53,7 +54,10 @@ login_manager = LoginManager() # Crea una instancia de LoginManager para manejar
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
+# OTRA CONFIGURACIÓN
 app.app_context().push()
+
+
 
 UPLOAD_FOLDER = './uploads'  # Define your upload folder path
 if not os.path.exists(UPLOAD_FOLDER):
