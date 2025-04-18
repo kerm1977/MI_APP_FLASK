@@ -4,7 +4,7 @@
 
     <div class="post-card">
         {% if post.image %}
-            <img src="{{ url_for('static', filename='uploads/' + post.image) }}" alt="Post Image" class="post-image">
+            <img src="{{ url_for('static', filename='images/' + post.image) }}" alt="{{ post.title }}">
         {% endif %}
         <div class="post-content">
             <h1 class="post-title">{{ post.title }}</h1>

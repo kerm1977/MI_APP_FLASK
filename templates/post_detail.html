@@ -11,7 +11,7 @@
 
         {% if post.image %}
             <figure class="image">
-                <img src="{{ url_for('static', filename='uploads/' + post.image) }}" alt="Post Image" class="post-image">
+                <img src="{{ url_for('static', filename='images/' + post.image) }}" alt="{{ post.title }}">
             </figure>
         {% endif %}
 

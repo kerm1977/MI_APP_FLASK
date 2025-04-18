@@ -4,8 +4,8 @@ from flask_migrate import Migrate  # Importa Migrate para manejar migraciones de
 from werkzeug.security import generate_password_hash, check_password_hash # Importa funciones para manejar contraseñas seguras (Depende de la clase User)
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user # Importa funciones para manejar la autenticación de usuarios (Depende de la clase User y app)
 from flask_sqlalchemy import SQLAlchemy # Importa SQLAlchemy para interactuar con la base de datos (Depende de app)
-from werkzeug.utils import secure_filename # Importa secure_filename para manejar archivos cargados de forma segura (Depende de las rutas que manejan uploads)
-import os # Importa el módulo os para interactuar con el sistema operativo (Depende de app.secret_key y rutas de uploads)
+from werkzeug.utils import secure_filename # Importa secure_filename para manejar archivos cargados de forma segura (Depende de las rutas que manejan images)
+import os # Importa el módulo os para interactuar con el sistema operativo (Depende de app.secret_key y rutas de images)
 from datetime import datetime, timedelta
 import sqlite3
 from sqlalchemy import or_
@@ -16,7 +16,7 @@ import requests
 import secrets #videos
 import math
 import secrets
-from flask import send_from_directory #Permite ver la imagen en el users
+from flask import send_from_directory #Permite ver la imagen en los users
 # from recuperacion_contraseña import crear_modulo_recuperacion_contraseña # Importacion del modulo.
 from urllib.parse import urlparse
 import csv
@@ -27,49 +27,53 @@ import io
 # RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
 # RECUPERACION DE CONTRASEÑA EN CASO DE QUE NO FUNCIONE BORRAR
 # BORRAR TAMBIEN reset_password, RESTABLECER CONTRASEÑA
-# recuperacion_contraseña forgot_password 
+# recuperacion_contraseña forgot_password
 import smtplib
 from email.mime.text import MIMEText
-
 
 
 # CONFIG BASE DE DATOS
 app = Flask(__name__)  # Crea una instancia de la aplicación Flask (Todas las rutas y configuraciones dependen de esto)
 
 
-# CONFIGURACIÓN PARA LA BASE DE DATOS MySQL en PythonAnywhere
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://kenth1977:CR129x7848n@kenth1977.mysql.pythonanywhere-services.com/kenth1977$db'
-#CONFIGURACIÓN PARA LA BASE DE DATOS LOCAL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db) lOCALMENTE
+# pip install pysqlite3 --user
+# Conector para la base de datos de PythonAnywhere
+USERNAME = os.environ.get('USERNAME')
+# if USERNAME is None:
+#     USERNAME = 'kenth1977'  # **FORZANDO EL NOMBRE DE USUARIO PARA PRUEBAS**
+# DATABASE_NAME = 'kenth1977$db'  # El nombre de tu base de datos en PythonAnywhere
+# DATABASE_PATH = f'/home/{USERNAME}/{DATABASE_NAME}'
+# app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
 
+# Ruta absoluta a la carpeta static/images
+#UPLOAD_FOLDER = os.path.join('/home', os.environ.get('USERNAME'), 'MI_APP_FLASK', 'static', 'images')
+
+
+#FOLDER DE IMAGENES QUE FUNCIONA CON LO QUE SE SUBE A TRAVES DE FORMULARIOS DE SUBIDA.
+# SI SE CAMBIA LA RUTA avatars TAMBIEN SE DEBE CAMBIAR EN LAS VISTAS HTML
+
+#CONFIGURACIÓN PARA LA BASE DE DATOS LOCAL
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db) LOCALMENTE
+
+UPLOAD_FOLDER ="static/images"
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
 app.secret_key = os.urandom(24) # Genera una clave secreta para la sesión (Depende de flask_login)
-UPLOAD_FOLDER = 'static/uploads/' # Define la carpeta para almacenar archivos cargados (Depende de las rutas de uploads)
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} # Define las extensiones de archivo permitidas (Depende de las rutas de uploads)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER # Configura la carpeta de carga en la aplicación (Depende de rutas que manejan uploads)
-app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS # Configura las extensiones permitidas en la aplicación (Depende de rutas que manejan uploads)
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} # Define las extensiones de archivo permitidas (Depende de las rutas de images)
+app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS # Configura las extensiones permitidas en la aplicación (Depende de rutas que manejan images)
 db = SQLAlchemy(app) # Crea una instancia de SQLAlchemy asociada a la aplicación (Depende de app y configura la base de datos)
 login_manager = LoginManager() # Crea una instancia de LoginManager para manejar la autenticación (Depende de app)
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
 migrate = Migrate(app, db) # Inicializa Migrate para manejar migraciones de la base de datos (Depende de db y app)
-# OTRA CONFIGURACIÓN
-app.app_context().push()
-
-
-
-UPLOAD_FOLDER = './uploads'  # Define your upload folder path
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'} # Added missing extensions
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+           
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -380,23 +384,24 @@ def edit_video(video_id):
     video = Video.query.get_or_404(video_id)
     if request.method == 'POST':
         video.title = request.form['title']
-        video.detail = request.form['detail'] # Corrección: usa 'detail' en lugar de 'content'
+        video.detail = request.form['detail']
         video.video_url = request.form['video_url']
         image = request.files.get('image')
 
         if image:
-            filename = secrets.token_hex(16) + os.path.splitext(image.filename)[1]
+            filename = secure_filename(image.filename) # Usar secure_filename aquí también
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             image.save(filepath)
-            video.image_url = filepath
+            video.image_url = filename # Guarda solo el nombre del archivo
         db.session.commit()
         flash('Video actualizado correctamente', 'success')
         return redirect(url_for('videos'))
     return render_template('edit_video.html', video=video)
 
-@app.route('/borrar_video/<int:id>', methods=['POST'])
-def borrar_video(id):
-    video = Video.query.get_or_404(id)
+
+@app.route('/videos/delete/<int:tarea_id>', methods=['POST'])
+def borrar_video(tarea_id):
+    video = Video.query.get_or_404(tarea_id) # Usar 'tarea_id' aquí
     try:
         if video.image_url:
             os.remove(os.path.join(app.config['UPLOAD_FOLDER'], video.image_url))
@@ -407,7 +412,7 @@ def borrar_video(id):
     db.session.delete(video)
     db.session.commit()
     flash('Video eliminado correctamente.', 'success')
-    return redirect(url_for('videos'))  # O la ruta que corresponda
+    return redirect(url_for('videos'))
 
 @app.route('/actualizar_video/<int:id>', methods=['GET', 'POST'])
 def actualizar_video(id):
@@ -429,8 +434,6 @@ def actualizar_video(id):
         return redirect(url_for('videos'))
 
     return render_template('create_vids.html', video=video)
-
-
 
 
 
@@ -465,7 +468,7 @@ def registro(): # Define la función para el registro de usuarios
             if file and allowed_file(file.filename): # Verifica si el archivo es válido
                 filename = secure_filename(file.filename) # Obtiene el nombre seguro del archivo
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)) # Guarda el archivo
-                avatar_path = 'uploads/' + filename # Define la ruta del avatar
+                avatar_path = 'images/' + filename # Define la ruta del avatar
             else: # Si el archivo no es válido
                 avatar_path = None # Define la ruta del avatar como None
         else: # Si no se cargó un avatar
@@ -483,14 +486,8 @@ def registro(): # Define la función para el registro de usuarios
 
 
 
-
-
-
-
-
-
  # from flask import send_from_directory 
-@app.route('/uploads/<filename>')
+@app.route('/images/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
@@ -671,8 +668,7 @@ def actualizar_avatar():
                 filename = secure_filename(file.filename)
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
-                # Cambio aquí: guardar la ruta absoluta en la base de datos
-                usuario.avatar = filepath
+                usuario.avatar = filename  # Guarda solo el nombre del archivo
                 db.session.commit()
                 return redirect(url_for('perfil'))
             else:
@@ -680,8 +676,8 @@ def actualizar_avatar():
         else:
             return "No se seleccionó ningún archivo"
 
-    current_avatar = usuario.avatar if usuario.avatar else None
-    return render_template('actualizar_avatar.html', current_avatar=current_avatar)
+    current_avatar_filename = usuario.avatar if usuario.avatar else None
+    return render_template('actualizar_avatar.html', current_avatar=current_avatar_filename)
 
 
 
@@ -735,7 +731,7 @@ def agenda():
                 if file and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    avatar_path = 'uploads/' + filename
+                    avatar_path = 'images/' + filename
 
             nuevo_contacto = Contacto(nombre=nombre, apellido1=apellido1, apellido2=apellido2, email=email, telefono=telefono, celular=celular, empresa=empresa, categoria=categoria, avatar=avatar_path)
             db.session.add(nuevo_contacto)
@@ -773,7 +769,7 @@ def editar_contacto(contacto_id):
             if avatar.filename != '':
                 filename = secure_filename(avatar.filename)
                 avatar.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                new_avatar = 'uploads/' + filename #Guardamos la ruta relativa a uploads
+                new_avatar = 'images/' + filename #Guardamos la ruta relativa a images
 
         if (nombre == contacto.nombre and
             apellido1 == contacto.apellido1 and
@@ -954,7 +950,7 @@ def server_not_found(e):
 
 
 if __name__ == '__main__': # Verifica si el script se ejecuta directamente
-    db.create_all()
+    # db.create_all()
     # db.upgrade_all()
     # db.drop_all() #Solo se ejecuta para migrar nuevos campos a la db pero borra el contenido
     app.run(debug=True, port=3000) # Ejecuta la aplicación Flask

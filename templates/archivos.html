@@ -45,7 +45,7 @@
             {% if item.es_imagen %}
                 <div class="col-md-2 mb-4">
                     <div class="card">
-                        <img src="{{ url_for('static', filename='uploads/' + item.nombre_archivo) }}" class="card-img-top" alt="Imagen Subida">
+                        <img src="{{ url_for('uploaded_file', filename=item.nombre_archivo) }}" class="card-img-top" alt="Imagen Subida">
                         <div class="card-body">
                             <h5 class="card-title text-truncate">{{ item.nombre_archivo }}</h5>
                             {% if item.usuario %}

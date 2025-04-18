@@ -67,22 +67,22 @@
                     {% if video.image_url %}
                     {% if video.video_url %}
                     <a href="{{ video.video_url }}" target="_blank">
-                        <img src="{{ url_for('static', filename='uploads/' + video.image_url) }}" class="card-img-top"
-                            alt="Imagen">
+                        <img src="{{ url_for('static', filename='images/' + video.image_url) }}" alt="Imagen actual" style="max-width: 100px;">
                     </a>
                     {% else %}
-                    <img src="{{ url_for('static', filename='uploads/' + video.image_url) }}" class="card-img-top"
-                        alt="Imagen">
-                    {% endif %}
+                    <img src="{{ url_for('static', filename=video.image_url) }}" alt="Imagen actual" style="">
                     {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ video.title }}</h5>
                         <p class="card-text">{{ video.detail }}</p>
                     </div>
                     <div class="social-share">
-                        <a href="https://wa.me/?text={% if video.image_url %}{{ url_for('static', filename='uploads/' + video.image_url, _external=True) }}{% else %}Imagen no disponible{% endif %}"
-                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('static', filename='uploads/' + video.image_url, _external=True) }}"
-                            target="_blank" title="Compartir en Facebook">
+                        <a href="https://wa.me/?text={% if video.image_url %}{{ url_for('uploaded_file', filename=video.image_url, _external=True) }}{% else %}Imagen no disponible{% endif %}"
+                           target="_blank" title="Compartir en WhatsApp">
+                            <span class="icon-whatsapp"></span>
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('uploaded_file', filename=video.image_url, _external=True) }}"
+                           target="_blank" title="Compartir en Facebook">
                             <span class="icon-facebook"></span>
                         </a>
                     </div>
@@ -90,15 +90,23 @@
                     current_user.email == "jceciliano69@gmail.com" %}
                     <div class="card-actions">
                         <a href="{{ url_for('actualizar_video', id=video.id) }}" class="btn btn-primary btn-sm"
-                            title="Editar">
+                           title="Editar">
                             <span class="icon-pencil"></span>
                         </a>
-                        <form method="POST" action="{{ url_for('borrar_video', id=video.id) }}" style="display: inline;">
+                        <form method="POST" action="{{ url_for('borrar_video', tarea_id=video.id) }}" style="display: inline;">
+ 
                             <button type="submit" class="btn btn-danger btn-sm"
-                                onclick="return confirm('¿Estás seguro de que quieres borrar este video?')" title="Borrar">
+                                    onclick="return confirm('¿Estás seguro de que quieres borrar este video?')" title="Borrar">
                                 <span class="icon-bin"></span>
                             </button>
                         </form>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ video.title }}</h5>
+                        <p class="card-text">{{ video.detail }}</p>
+                        <p class="card-text">Imagen no disponible</p>
                     </div>
                     {% endif %}
                 </div>
@@ -108,6 +116,5 @@
     </div>
 </body>
 
-</html>
 
 {%endblock%}
