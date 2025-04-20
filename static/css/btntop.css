@@ -16,8 +16,9 @@
   white-space: nowrap;
   
   /*PARA CAMBIAR EL COLOR DEL BOTON*/
-  background: rgba(232, 98, 86, 0.8) url(../img/cd-top-arrow.svg) no-repeat center 50%;
+  background: orange url(../images/cd-top-arrow.svg) no-repeat center 50%;
   visibility: hidden;
+  box-shadow: 10px;
   opacity: 0;
   -webkit-transition: opacity .3s 0s, visibility 0s .3s;
   -moz-transition: opacity .3s 0s, visibility 0s .3s;

@@ -141,7 +141,7 @@
 
 <section class="section">
     <div class="container">
-        <h1 class="title">Posts</h1>
+        <h1 class="title">Caminatas</h1>
 
         {% if current_user.is_authenticated and (current_user.email == "kenth1977@gmail.com" or current_user.email == "jceciliano69@gmail.com") %}
             <a href="{{ url_for('new_post') }}" class="btn btn-success mb-3">Crear Nuevo Post</a>

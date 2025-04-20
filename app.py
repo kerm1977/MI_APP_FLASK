@@ -37,32 +37,37 @@ app = Flask(__name__)  # Crea una instancia de la aplicación Flask (Todas las r
 
 
 # pip install pysqlite3 --user
-# Conector para la base de datos de PythonAnywhere
-USERNAME = os.environ.get('USERNAME')
+
+
+#CONFIGURACIÓN PARA LA BASE DE DATOS LOCAL
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db) LOCALMENTE
+UPLOAD_FOLDER ="static/images"
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+
+#CONFIGURACIÓN PARA LA BASE PYTHONANYWHARE
+# USERNAME = os.environ.get('USERNAME')
 # if USERNAME is None:
 #     USERNAME = 'kenth1977'  # **FORZANDO EL NOMBRE DE USUARIO PARA PRUEBAS**
 # DATABASE_NAME = 'kenth1977$db'  # El nombre de tu base de datos en PythonAnywhere
 # DATABASE_PATH = f'/home/{USERNAME}/{DATABASE_NAME}'
 # app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
 
-# Ruta absoluta a la carpeta static/images
-#UPLOAD_FOLDER = os.path.join('/home', os.environ.get('USERNAME'), 'MI_APP_FLASK', 'static', 'images')
+# # Ruta absoluta a la carpeta static/images
+# UPLOAD_FOLDER = os.path.join('/home', USERNAME, 'MI_APP_FLASK', 'static', 'images')
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-#FOLDER DE IMAGENES QUE FUNCIONA CON LO QUE SE SUBE A TRAVES DE FORMULARIOS DE SUBIDA.
-# SI SE CAMBIA LA RUTA avatars TAMBIEN SE DEBE CAMBIAR EN LAS VISTAS HTML
 
-#CONFIGURACIÓN PARA LA BASE DE DATOS LOCAL
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.db' # Configura la URI de la base de datos (Depende de db) LOCALMENTE
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
-UPLOAD_FOLDER ="static/images"
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
+db = SQLAlchemy(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Desactiva el seguimiento de modificaciones de SQLAlchemy (Depende de db)
 app.secret_key = os.urandom(24) # Genera una clave secreta para la sesión (Depende de flask_login)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'} # Define las extensiones de archivo permitidas (Depende de las rutas de images)
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS # Configura las extensiones permitidas en la aplicación (Depende de rutas que manejan images)
-db = SQLAlchemy(app) # Crea una instancia de SQLAlchemy asociada a la aplicación (Depende de app y configura la base de datos)
+#db = SQLAlchemy(app) # Crea una instancia de SQLAlchemy asociada a la aplicación (Depende de app y configura la base de datos)
 login_manager = LoginManager() # Crea una instancia de LoginManager para manejar la autenticación (Depende de app)
 login_manager.init_app(app) # Inicializa LoginManager con la aplicación (Depende de app)
 login_manager.login_view = 'login' # Define la vista de inicio de sesión (Depende de flask_login)
@@ -73,7 +78,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-           
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -113,7 +118,7 @@ class User(UserMixin, db.Model):
         self.reset_token = None
         self.reset_token_expiration = None
         db.session.commit()
-    # RECUPERADOR DE CONTRASEÑAS    
+    # RECUPERADOR DE CONTRASEÑAS
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -140,7 +145,7 @@ class Video(db.Model):
     video_url = db.Column(db.String(200))
     image_url = db.Column(db.String(200))  # Nuevo campo para la URL de la imagen
 
-    
+
 class Contacto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
@@ -152,10 +157,6 @@ class Contacto(db.Model):
     empresa = db.Column(db.String(100))
     categoria = db.Column(db.String(100))
     avatar = db.Column(db.String(255))  # Nueva columna para la ruta del avatar
-
-
-
-
 
 
 
@@ -222,8 +223,9 @@ def borrar_tarea(tarea_id):
 # VER IMAGENES Y POSTS
 @app.route('/post/<int:post_id>')
 def post(post_id):
+    title = "Caminatas"
     post = Post.query.get_or_404(post_id)
-    return render_template('post_detail.html', post=post)
+    return render_template('post_detail.html', post=post, title=title)
 
 
 @app.route('/new', methods=['GET', 'POST'])
@@ -352,7 +354,7 @@ def delete_post(post_id):
 @app.route('/create_vids')
 def create_vids():
     return render_template('create_vids.html')
-    
+
 
 @app.route('/videos', methods=['GET', 'POST'])
 def videos():
@@ -486,7 +488,7 @@ def registro(): # Define la función para el registro de usuarios
 
 
 
- # from flask import send_from_directory 
+ # from flask import send_from_directory
 @app.route('/images/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -882,7 +884,7 @@ def reset_password(token):
 
 
 
-# ADMINISTRADOR DE ARCHIVOS 
+# ADMINISTRADOR DE ARCHIVOS
 
 @app.route('/archivos')
 @login_required
@@ -935,16 +937,17 @@ def subir():
 @app.errorhandler(404)
 # Error página no encontrada
 def page_not_found(e):
-   
+
     return render_template('404.html'), 404
 
 # Error Servidor Interno
 @app.errorhandler(500)
 # Servidor no encontrada
 def server_not_found(e):
-   
+
     return render_template('500.html'), 500
 # -----------------------
+
 
 
 

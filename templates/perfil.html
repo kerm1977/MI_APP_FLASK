@@ -2,151 +2,90 @@
 {% block content %}
 
 <style>
-  .profile-container {
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    border-radius: 5px;
+    position: relative;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.profile-avatar-container {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 2rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 2rem auto;
-    max-width: 600px;
-    position: relative;
-  }
+    justify-content: center; /* Center the avatar horizontally */
+    margin-bottom: 1rem; /* Keep some space below */
+    background-color: #f0f0f0; /* Light grey background */
+    padding: 10px; /* Add some padding around the avatar */
+    border-radius: 50%; /* Make the container round as well */
+    width: 120px; /* Slightly larger to accommodate padding */
+    height: 120px;
+    align-items: center; /* Center vertically within the container */
+    margin-left: auto; /* Add auto margins for centering */
+    margin-right: auto;
+}
 
-  .profile-avatar {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
+.profile-avatar {
+    width: 100px;
+    height: 100px;
     overflow: hidden;
-    margin-bottom: 1rem;
-    border: 3px solid #007bff;
-    position: relative;
-  }
+    border-radius: 50%;
+    cursor: pointer;
+}
 
-  .profile-avatar img {
+.profile-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
+}
 
-  .profile-avatar .edit-icon {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    background-color: #007bff;
-    color: white;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-  }
+/* Media query for mobile devices (example: max-width 768px) */
+@media (max-width: 768px) {
+    .profile-avatar-container {
+        width: 100px; /* Adjust size for smaller screens */
+        height: 100px;
+        padding: 8px; /* Adjust padding for smaller screens */
+    }
 
-  .profile-avatar .edit-icon::before {
-    content: "+";
-    font-size: 1.2rem;
-  }
-
-  .profile-details {
-    width: 100%;
-    margin-top: 1rem;
-  }
-
-  .profile-details p {
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-    color: #333;
-  }
-
-  .profile-details strong {
-    font-weight: 600;
-    color: #555;
-  }
-
-  .profile-actions {
-    margin-top: 1.5rem;
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .profile-actions a {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background-color 0.3s ease;
-  }
-
-  .profile-actions a.primary {
-    background-color: #007bff;
-  }
-
-  .profile-actions a.info {
-    background-color: #17a2b8;
-  }
-
-  .profile-actions a.danger {
-    background-color: #dc3545;
-  }
-
-  .profile-actions a:hover {
-    opacity: 0.8;
-  }
-
-  .notification {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 5px;
-  }
-
-  .notification.is-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-
-  .notification.is-danger {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-
-  .other-actions {
-    margin-top: 2rem;
-    text-align: center;
-  }
-
-  .other-actions a {
-    margin: 0 0.5rem;
-    padding: 0.5rem 1rem;
-    border: 1px solid #007bff;
-    border-radius: 5px;
-    color: #007bff;
-    text-decoration: none;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  .other-actions a:hover {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .main-title {
-    text-align: center;
-    margin: 2rem 0;
-  }
-
-  .main-title h1 {
-    font-size: 2.5rem;
-    color: #333;
-  }
+    .profile-avatar {
+        width: 84px; /* Adjust avatar size within the container */
+        height: 84px;
+    }
+}
 </style>
 
 <div class="container is-fluid">
@@ -155,37 +94,100 @@
     </div>
 </div>
 
-<div class="profile-container">
-    {% if usuario.avatar %}
-    <div class="profile-avatar">
-        <img src="{{ url_for('static', filename='images/' + usuario.avatar) }}" alt="Avatar de {{ usuario.name }}">
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-two-thirds">
+                <div class="card" style="box-shadow: none;">
+                    <div class="card-content has-text-centered">
+                        <h3 class="title is-3 mb-4">Mi Cuenta</h3>
+
+                        <div class="profile-avatar-container">
+                            <div class="profile-avatar">
+                                {% if usuario.avatar %}
+                                <img id="avatar-small" class="img-fluid" src="{{ url_for('static', filename='images/' + usuario.avatar) }}" alt="Avatar de {{ usuario.name }}">
+                                {% else %}
+                                <img id="avatar-small" class="img-fluid" src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Avatar por defecto">
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="profile-details mt-4">
+                            <p><strong>Nombre:</strong> {{ usuario.name }}</p>
+                            <p><strong>Primer Apellido:</strong> {{ usuario.first_last_name }}</p>
+                            <p><strong>Segundo Apellido:</strong> {{ usuario.second_last_name }}</p>
+                            <p><strong>Teléfono:</strong> {{ usuario.phone_number }}</p>
+                            <p><strong>Email:</strong> {{ usuario.email }}</p>
+                        </div>
+
+                        <hr class="my-5">
+
+                        <div class="buttons is-centered">
+                            <a class="button is-success is-outlined" href="{{ url_for('actualizar_usuario', user_id=usuario.id) }}">
+                                <span class="icon"><span class="icon-pencil2"></span></span>
+                                <span>Editar Perfil</span>
+                            </a>
+                            <a class="button is-warning is-outlined" href="{{ url_for('actualizar_avatar') }}">
+                                <span class="icon"><span class="icon-image"></span></span>
+                                <span>Cambiar Avatar</span>
+                            </a>
+                            <a class="button is-info is-outlined" href="{{ url_for('agenda') }}">
+                                <span class="icon"><span class="icon-address-book"></span></span>
+                                <span>Mi Agenda</span>
+                            </a>
+                            <a class="button is-link is-outlined" href="{{ url_for('users') }}">
+                                <span class="icon"><span class="icon-users"></span></span>
+                                <span>Otros Usuarios</span>
+                            </a>
+                        </div>
+
+                        <hr class="my-5">
+
+                        <div class="buttons is-centered">
+                            <a class="button is-danger" href="{{ url_for('logout') }}">
+                                <span class="icon"><span class="icon-switch"></span></span>
+                                <span>Cerrar Sesión</span>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <a href="{{ url_for('actualizar_avatar') }}" class="edit-icon"></a>
-</div>
-{% endif %}
+</section>
 
-<p><strong>Nombre:</strong> {{ usuario.name }}</p>
-<p><strong>Primer Apellido:</strong> {{ usuario.first_last_name }}</p>
-<p><strong>Segundo Apellido:</strong> {{ usuario.second_last_name }}</p>
-<p><strong>Teléfono:</strong> {{ usuario.phone_number }}</p>
-<p><strong>Email:</strong> {{ usuario.email }}</p>
+<div id="imageModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <img id="modal-image" class="modal-image">
+    </div>
 </div>
 
-<div class="profile-actions">
-    <a class="primary" href="{{ url_for('actualizar_usuario', user_id=usuario.id) }}"><span class="icon-pencil2"></span></a>
-    <a class="info" href="{{ url_for('actualizar_avatar') }}"><span class="icon-image"></span></a>
-    <a class="danger" href="{{ url_for('logout') }}"><span class="icon-switch"></span></a>
-</div>
-</div>
+<script>
+// Get the modal
+var modal = document.getElementById("imageModal");
 
-<div id="avatarModal" class="modal">
-    <span class="close">&times;</span>
-    <img class="modal-content" id="modalAvatar">
-</div>
+// Get the image and insert it inside the modal - use its "alt" text as a caption
+var img = document.getElementById("avatar-small");
+var modalImg = document.getElementById("modal-image");
+var closeBtn = document.querySelector(".close-button");
 
-<div class="other-actions">
-    <a href="{{ url_for('agenda') }}">Contactos</a>
-    <a href="{{ url_for('users') }}">Ver usuarios registrados</a>
-</div>
+img.onclick = function(){
+    modal.style.display = "block";
+    modalImg.src = this.src;
+}
+
+closeBtn.onclick = function() {
+    modal.style.display = "none";
+}
+
+// Close the modal if the user clicks outside of it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
 
 {% endblock %}
