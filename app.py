@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy # Importa SQLAlchemy para interactuar co
 from werkzeug.utils import secure_filename # Importa secure_filename para manejar archivos cargados de forma segura (Depende de las rutas que manejan images)
 import os # Importa el módulo os para interactuar con el sistema operativo (Depende de app.secret_key y rutas de images)
 from datetime import datetime, timedelta
+
 import sqlite3
 from sqlalchemy import or_
 from flask_wtf import FlaskForm
@@ -128,6 +129,39 @@ class Post(db.Model):
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) #Relacion con el usuario, para saber quien lo creo.
     user_email = db.Column(db.String(120), nullable=True) # Agrega este campo
+    fecha_salida = db.Column(db.Date, nullable=True)
+    dificultad = db.Column(db.String(20), nullable=True)
+    capacidad_buseta = db.Column(db.Integer, nullable=True)
+    capacidad_total = db.Column(db.Integer, nullable=True)
+    distancia = db.Column(db.Float, nullable=True)
+    lugar_salida = db.Column(db.String(100), nullable=True)
+    hora_salida = db.Column(db.Time, nullable=True)
+    recogemos_en = db.Column(db.Text, nullable=True)
+    tipoTerreno = db.Column(db.Text, nullable=True)
+    requiere_estadía = db.Column(db.String(3), nullable=True)
+    animales = db.Column(db.String(3), nullable=True)
+    duchas = db.Column(db.String(10), nullable=True)
+    banos = db.Column(db.String(3), nullable=True)
+    bastones = db.Column(db.String(50), nullable=True)
+    guantes = db.Column(db.String(10), nullable=True)
+    tipo_calzado = db.Column(db.String(20), nullable=True)
+    repelente = db.Column(db.String(10), nullable=True)
+    bloqueador = db.Column(db.String(10), nullable=True)
+    liquido = db.Column(db.String(10), nullable=True)
+    snacks = db.Column(db.String(10), nullable=True)
+    ropa_cambio = db.Column(db.String(10), nullable=True)
+
+class Contacto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(80), nullable=False)
+    apellido1 = db.Column(db.String(80), nullable=False)
+    apellido2 = db.Column(db.String(80))
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    telefono = db.Column(db.String(20))
+    celular = db.Column(db.String(20))
+    empresa = db.Column(db.String(120))
+    categoria = db.Column(db.String(80))
+    avatar = db.Column(db.String(200), default='img/default.png')
 
 class Tarea(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -145,18 +179,6 @@ class Video(db.Model):
     video_url = db.Column(db.String(200))
     image_url = db.Column(db.String(200))  # Nuevo campo para la URL de la imagen
 
-
-class Contacto(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    apellido1 = db.Column(db.String(100), nullable=False)
-    apellido2 = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100))
-    telefono = db.Column(db.String(20))
-    celular = db.Column(db.String(20))
-    empresa = db.Column(db.String(100))
-    categoria = db.Column(db.String(100))
-    avatar = db.Column(db.String(255))  # Nueva columna para la ruta del avatar
 
 
 
@@ -236,6 +258,34 @@ def new_post():
         title = request.form['title']
         content = request.form['content']
         image = request.files.get('image')
+        category = request.form.get('category')
+        tags = request.form.get('tags')
+        is_published = True if request.form.get('is_published') else False
+        summary = request.form.get('summary')
+        fecha_salida_str = request.form.get('fecha_salida')
+        # Convertir la cadena de fecha a un objeto datetime.date si no está vacío
+        fecha_salida = datetime.strptime(fecha_salida_str, '%Y-%m-%d').date() if fecha_salida_str else None
+        dificultad = request.form.get('dificultad')
+        capacidad_buseta = request.form.get('capacidad_buseta')
+        capacidad_total = request.form.get('capacidad_total')
+        distancia = request.form.get('distancia')
+        lugar_salida = request.form.get('lugar_salida')
+        hora_salida_str = request.form.get('hora_salida')
+        hora_salida = datetime.strptime(hora_salida_str, '%H:%M').time() if hora_salida_str else None
+        recogemos_en = request.form.get('recogemos_en')
+        tipoTerreno = request.form.get('tipoTerreno')
+        requiere_estadía = request.form.get('requiere_estadía')
+        animales = request.form.get('animales')
+        duchas = request.form.get('duchas')
+        banos = request.form.get('banos')
+        bastones = request.form.get('bastones')
+        guantes = request.form.get('guantes')
+        tipo_calzado = request.form.get('tipo_calzado')
+        repelente = request.form.get('repelente')
+        bloqueador = request.form.get('bloqueador')
+        liquido = request.form.get('liquido')
+        snacks = request.form.get('snacks')
+        ropa_cambio = request.form.get('ropa_cambio')
 
         app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
@@ -250,7 +300,11 @@ def new_post():
                 filename = secure_filename(image.filename)
                 try:
                     image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                    post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow(), user_id=current_user.id, user_email=current_user.email) # Almacena el correo
+                    post = Post(title=title, content=content, image=filename, date_posted=datetime.utcnow(), user_id=current_user.id, user_email=current_user.email,
+                                fecha_salida=fecha_salida, dificultad=dificultad, capacidad_buseta=capacidad_buseta, capacidad_total=capacidad_total,
+                                distancia=distancia, lugar_salida=lugar_salida, hora_salida=hora_salida, recogemos_en=recogemos_en, tipoTerreno=tipoTerreno,
+                                requiere_estadía=requiere_estadía, animales=animales, duchas=duchas, banos=banos, bastones=bastones, guantes=guantes,
+                                tipo_calzado=tipo_calzado, repelente=repelente, bloqueador=bloqueador, liquido=liquido, snacks=snacks, ropa_cambio=ropa_cambio)
                     db.session.add(post)
                     db.session.commit()
                     flash('Publicación creada con éxito', 'success')
@@ -264,7 +318,11 @@ def new_post():
                 return render_template('new_post.html')
 
         else:
-            post = Post(title=title, content=content, image=None, date_posted=datetime.utcnow(), user_id=current_user.id, user_email=current_user.email) # Almacena el correo
+            post = Post(title=title, content=content, image=None, date_posted=datetime.utcnow(), user_id=current_user.id, user_email=current_user.email,
+                        fecha_salida=fecha_salida, dificultad=dificultad, capacidad_buseta=capacidad_buseta, capacidad_total=capacidad_total,
+                        distancia=distancia, lugar_salida=lugar_salida, hora_salida=hora_salida, recogemos_en=recogemos_en, tipoTerreno=tipoTerreno,
+                        requiere_estadía=requiere_estadía, animales=animales, duchas=duchas, banos=banos, bastones=bastones, guantes=guantes,
+                        tipo_calzado=tipo_calzado, repelente=repelente, bloqueador=bloqueador, liquido=liquido, snacks=snacks, ropa_cambio=ropa_cambio)
             try:
                 db.session.add(post)
                 db.session.commit()
@@ -291,6 +349,34 @@ def edit_post(post_id):
     if request.method == 'POST':
         post.title = request.form['title']
         post.content = request.form['content']
+        post.category = request.form.get('category')
+        post.tags = request.form.get('tags')
+        post.is_published = True if request.form.get('is_published') else False
+        post.summary = request.form.get('summary')
+        fecha_salida_str = request.form.get('fecha_salida')
+        # Convertir la cadena de fecha a un objeto datetime.date si no está vacío
+        post.fecha_salida = datetime.strptime(fecha_salida_str, '%Y-%m-%d').date() if fecha_salida_str else None
+        post.dificultad = request.form.get('dificultad')
+        post.capacidad_buseta = request.form.get('capacidad_buseta')
+        post.capacidad_total = request.form.get('capacidad_total')
+        post.distancia = request.form.get('distancia')
+        post.lugar_salida = request.form.get('lugar_salida')
+        hora_salida_str = request.form.get('hora_salida')
+        post.hora_salida = datetime.strptime(hora_salida_str, '%H:%M').time() if hora_salida_str else None
+        post.recogemos_en = request.form.get('recogemos_en')
+        post.tipoTerreno = request.form.get('tipoTerreno')
+        post.requiere_estadía = request.form.get('requiere_estadía')
+        post.animales = request.form.get('animales')
+        post.duchas = request.form.get('duchas')
+        post.banos = request.form.get('banos')
+        post.bastones = request.form.get('bastones')
+        post.guantes = request.form.get('guantes')
+        post.tipo_calzado = request.form.get('tipo_calzado')
+        post.repelente = request.form.get('repelente')
+        post.bloqueador = request.form.get('bloqueador')
+        post.liquido = request.form.get('liquido')
+        post.snacks = request.form.get('snacks')
+        post.ropa_cambio = request.form.get('ropa_cambio')
         image = request.files.get('image')
 
         if image and image.filename != '':
@@ -310,8 +396,15 @@ def edit_post(post_id):
                     return render_template('edit_post.html', post=post, error=str(e))
 
         post.user_email = current_user.email # Actualiza el email si el usuario se edita.
-        db.session.commit()
-        return redirect(url_for('post', post_id=post.id))
+        try:
+            db.session.commit()
+            flash('Publicación editada con éxito', 'success')
+            return redirect(url_for('post', post_id=post.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al editar la publicación: {e}', 'danger')
+            return render_template('edit_post.html', post=post, titulo=titulo, error=str(e))
+
     return render_template('edit_post.html', post=post, titulo=titulo)
 
 
@@ -747,6 +840,7 @@ def agenda():
     contactos = Contacto.query.all()
     cantidad_contactos = Contacto.query.count()
     return render_template('agenda.html', contactos=contactos, cantidad_contactos=cantidad_contactos)
+
 
 
 @app.route('/editar_contacto/<int:contacto_id>', methods=['GET', 'POST'])

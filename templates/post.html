@@ -7,7 +7,7 @@
             <img src="{{ url_for('static', filename='images/' + post.image) }}" alt="{{ post.title }}">
         {% endif %}
         <div class="post-content">
-            <h1 class="post-title">{{ post.title }}</h1>
+            <h3 class="post-title">{{ post.title }}</h3>
             <p class="post-text">{{ post.content }}</p>
             <div class="actions">
                 <a href="{{ url_for('edit_post', post_id=post.id) }}" class="action-button edit-button">Editar</a>
